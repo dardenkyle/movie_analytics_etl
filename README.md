@@ -1,5 +1,7 @@
 # Movie Analytics ETL
 
+![Last Commit](https://img.shields.io/github/last-commit/dardenkyle/movie_analytics_etl)
+
 An end-to-end data engineering project using **Postgres, dbt, and Airflow** to process IMDb datasets.
 
 ## Overview
