@@ -5,6 +5,7 @@
 An end-to-end data engineering project using **Postgres, dbt, and Airflow** to process IMDb datasets.
 
 ## Overview
+
 - **Raw ingestion**: IMDb `.tsv` files loaded into Postgres (`raw` schema).
 - **Transformations**: dbt staging + marts for clean, analysis-ready tables.
 - **Orchestration**: Airflow DAG to automate ingestion, transformations, and tests.
@@ -12,11 +13,13 @@ An end-to-end data engineering project using **Postgres, dbt, and Airflow** to p
 ## Quickstart
 
 1. **Start Postgres**
+
    ```bash
    docker compose up -d
    ```
 
 2. **Create raw schema**
+
    ```bash
    docker compose exec -T postgres \
    psql -U postgres -d analytics -f /sql/raw_schema.sql
@@ -30,6 +33,7 @@ An end-to-end data engineering project using **Postgres, dbt, and Airflow** to p
    ```
 
 ## Project Structure
+
 ```
 movie_analytics_etl/
 ├── docker-compose.yml    # Postgres (later: Airflow + dbt)
@@ -42,6 +46,7 @@ movie_analytics_etl/
 ```
 
 ## Next Steps
+
 - Add dbt `sources.yml` and staging models.
 - Create marts for movies, ratings, and people.
 - Add Airflow DAG to orchestrate ingestion → dbt run → dbt test.
