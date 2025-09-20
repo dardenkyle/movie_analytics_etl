@@ -42,6 +42,12 @@ cleaned as (
         end as genres_raw
     from
         source
+    -- Filter out records with invalid title types
+    where
+        titletype in (
+            'movie', 'short', 'tvEpisode', 'tvMiniSeries', 'tvMovie', 
+            'tvSeries', 'tvShort', 'tvSpecial', 'video', 'videoGame'
+        )
 )
 select
     *

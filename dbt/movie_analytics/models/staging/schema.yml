@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: stg_title_basics
+    description: "Clean movie/TV title data with proper typing"
+    columns:
+      - name: title_id
+        description: "Primary key - IMDb title identifier"
+        tests:
+          - unique
+          - not_null
+      - name: title_type
+        description: "Type of title (movie, tvSeries, etc.)"
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                [
+                  "movie",
+                  "short",
+                  "tvEpisode",
+                  "tvMiniSeries",
+                  "tvMovie",
+                  "tvSeries",
+                  "tvShort",
+                  "tvSpecial",
+                  "video",
+                  "videoGame",
+                ]
+      - name: primary_title
+        description: "Main title used by filmmakers"
+        tests:
+          - not_null
+
+  - name: stg_title_ratings
+    description: "Clean IMDb ratings data"
+    columns:
+      - name: title_id
+        description: "Foreign key to titles"
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_title_basics')
+              field: title_id
+      - name: average_rating
+        description: "Average rating 1-10"
+        tests:
+          - not_null
+      - name: num_votes
+        description: "Number of votes"
+        tests:
+          - not_null
+
+  - name: stg_name_basics
+    description: "Clean people/person data"
+    columns:
+      - name: person_id
+        description: "Primary key - IMDb person identifier"
+        tests:
+          - unique
+          - not_null
+      - name: primary_name
+        description: "Person's primary name"
+        tests:
+          - not_null
+
+  - name: stg_title_principals
+    description: "Clean cast and crew data"
+    columns:
+      - name: title_id
+        description: "Foreign key to titles"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_title_basics')
+              field: title_id
+      - name: person_id
+        description: "Foreign key to people"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_name_basics')
+              field: person_id
+      - name: job_category
+        description: "Job category (actor, director, etc.)"
+        tests:
+          - not_null
+
+  - name: stg_title_akas
+    description: "Clean alternative title data"
+    columns:
+      - name: title_id
+        description: "Foreign key to titles"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_title_basics')
+              field: title_id

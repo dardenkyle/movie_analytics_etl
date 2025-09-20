@@ -28,6 +28,23 @@ cleaned as (
         end as character_names
     from
         source
+    -- Only include records for titles and names that exist in their respective tables
+    where
+        tconst in (
+            select tconst 
+            from {{ source('raw', 'title_basics') }}
+            where titletype in (
+                'movie', 'short', 'tvEpisode', 'tvMiniSeries', 'tvMovie', 
+                'tvSeries', 'tvShort', 'tvSpecial', 'video', 'videoGame'
+            )
+        )
+        and nconst in (
+            select nconst 
+            from {{ source('raw', 'name_basics') }}
+            where primaryname is not null
+            and primaryname != '\\N'
+            and trim(primaryname) != ''
+        )
 )
 select
     *

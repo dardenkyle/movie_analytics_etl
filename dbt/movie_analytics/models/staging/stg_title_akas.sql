@@ -46,6 +46,16 @@ cleaned as (
         end as is_original_title
     from
         source
+    -- Only include alternative titles for titles that exist in title_basics
+    where
+        titleid in (
+            select tconst 
+            from {{ source('raw', 'title_basics') }}
+            where titletype in (
+                'movie', 'short', 'tvEpisode', 'tvMiniSeries', 'tvMovie', 
+                'tvSeries', 'tvShort', 'tvSpecial', 'video', 'videoGame'
+            )
+        )
 )
 select
     *

@@ -33,6 +33,11 @@ cleaned as (
         end as known_for_titles_raw
     from
         source
+    -- Filter out records with missing primary names
+    where
+        primaryname is not null
+        and primaryname != '\\N'
+        and trim(primaryname) != ''
 )
 select
     *
