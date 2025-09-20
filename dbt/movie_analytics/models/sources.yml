@@ -1,0 +1,99 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw IMDb datasets loaded from TSV files"
+    schema: raw
+    tables:
+      - name: title_basics
+        description: "Basic information for titles (movies, TV shows, etc.)"
+        columns:
+          - name: tconst
+            description: "Title identifier (primary key)"
+            tests:
+              - unique
+              - not_null
+          - name: titletype
+            description: "Type of title (movie, tvSeries, tvEpisode, etc.)"
+          - name: primarytitle
+            description: "Popular title used by filmmakers"
+          - name: originaltitle
+            description: "Original title in original language"
+          - name: isadult
+            description: "Adult content flag (0=false, 1=true)"
+          - name: startyear
+            description: "Release year or TV series start year"
+          - name: endyear
+            description: "TV series end year (\\N for movies)"
+          - name: runtimeminutes
+            description: "Primary runtime in minutes"
+          - name: genres
+            description: "Comma-separated list of genres"
+
+      - name: title_ratings
+        description: "IMDb ratings and vote counts for titles"
+        columns:
+          - name: tconst
+            description: "Title identifier"
+            tests:
+              - unique
+              - not_null
+          - name: averagerating
+            description: "Weighted average of all ratings (1-10)"
+          - name: numvotes
+            description: "Number of votes the title has received"
+
+      - name: title_akas
+        description: "Alternative titles and translations"
+        columns:
+          - name: titleid
+            description: "Title identifier"
+          - name: ordering
+            description: "Order of the alternative title"
+          - name: title
+            description: "Alternative title"
+          - name: region
+            description: "Region/country code"
+          - name: language
+            description: "Language code"
+          - name: types
+            description: "Comma-separated list of title types"
+          - name: attributes
+            description: "Comma-separated list of attributes"
+          - name: isoriginaltitle
+            description: "Original title flag (0=false, 1=true)"
+
+      - name: title_principals
+        description: "Principal cast/crew for titles"
+        columns:
+          - name: tconst
+            description: "Title identifier"
+          - name: ordering
+            description: "Order of importance for the title"
+          - name: nconst
+            description: "Person identifier"
+          - name: category
+            description: "Job category (actor, director, writer, etc.)"
+          - name: job
+            description: "Specific job title"
+          - name: characters
+            description: "Character name (for actors)"
+
+      - name: name_basics
+        description: "Basic information for names/people"
+        columns:
+          - name: nconst
+            description: "Person identifier (primary key)"
+            tests:
+              - unique
+              - not_null
+          - name: primaryname
+            description: "Primary name"
+          - name: birthyear
+            description: "Birth year"
+          - name: deathyear
+            description: "Death year (\\N if alive)"
+          - name: primaryprofession
+            description: "Comma-separated list of primary professions"
+          - name: knownfortitles
+            description: "Comma-separated list of title identifiers"
