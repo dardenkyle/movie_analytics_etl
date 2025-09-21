@@ -6,6 +6,7 @@ Follows PEP8 standards and includes robust error handling.
 """
 
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Dict, Any
@@ -114,8 +115,15 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
     Raises:
         psycopg2.Error: If COPY command fails
     """
-    # Convert to container path (mounted volume)
-    container_path = f"/data/landing/archive/{file_path.name}"
+    # Detect if running in CI or Docker environment
+    is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+
+    if is_ci:
+        # CI environment: use local file paths
+        container_path = str(file_path)
+    else:
+        # Docker environment: use mounted volume path
+        container_path = f"/data/landing/archive/{file_path.name}"
 
     copy_sql = f"""
         COPY {table_name}

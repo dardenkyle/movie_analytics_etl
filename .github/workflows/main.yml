@@ -93,6 +93,7 @@ jobs:
       - name: Load test data
         run: python ingestion/load_raw.py
         env:
+          GITHUB_ACTIONS: "true"
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
