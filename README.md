@@ -1,5 +1,10 @@
 # Movie Analytics ETL
 
+![CI](https://github.com/dardenkyle/movie_analytics_etl/workflows/Movie%20Analytics%20ETL%20Pipeline/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![dbt](https://img.shields.io/badge/dbt-1.9.1-orange.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-16-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Last Commit](https://img.shields.io/github/last-commit/dardenkyle/movie_analytics_etl)
 
 An end-to-end data engineering project using **PostgreSQL and dbt** to process IMDb datasets into a dimensional data warehouse.
