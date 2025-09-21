@@ -6,10 +6,9 @@ Follows PEP8 standards and includes robust error handling.
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Any
 
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -23,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Database connection parameters
-DB_CONFIG = {
+DB_CONFIG: Dict[str, Any] = {
     "host": "localhost",
     "port": 5432,
     "database": "analytics",
@@ -59,7 +58,7 @@ def get_database_connection():
         logger.info("Successfully connected to database")
         return conn
     except psycopg2.Error as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error("Failed to connect to database: %s", e)
         raise
 
 
@@ -74,11 +73,11 @@ def check_file_exists(file_path: Path) -> bool:
         bool: True if file exists and is readable
     """
     if not file_path.exists():
-        logger.error(f"File not found: {file_path}")
+        logger.error("File not found: %s", file_path)
         return False
 
     if not file_path.is_file():
-        logger.error(f"Path is not a file: {file_path}")
+        logger.error("Path is not a file: %s", file_path)
         return False
 
     return True
@@ -94,9 +93,9 @@ def clear_table(cursor, table_name: str) -> None:
     """
     try:
         cursor.execute(f"TRUNCATE TABLE {table_name}")
-        logger.info(f"Cleared existing data from {table_name}")
+        logger.info("Cleared existing data from %s", table_name)
     except psycopg2.Error as e:
-        logger.error(f"Failed to clear table {table_name}: {e}")
+        logger.error("Failed to clear table %s: %s", table_name, e)
         raise
 
 
@@ -127,10 +126,10 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
     try:
         cursor.execute(copy_sql)
         row_count = cursor.rowcount
-        logger.info(f"Loaded {row_count} rows into {table_name}")
+        logger.info("Loaded %d rows into %s", row_count, table_name)
         return row_count
     except psycopg2.Error as e:
-        logger.error(f"Failed to load {file_path.name} into {table_name}: {e}")
+        logger.error("Failed to load %s into %s: %s", file_path.name, table_name, e)
         raise
 
 
@@ -158,7 +157,7 @@ def verify_data_load(cursor, table_name: str) -> Dict[str, int]:
             "has_data": sample_row is not None,
         }
     except psycopg2.Error as e:
-        logger.error(f"Failed to verify {table_name}: {e}")
+        logger.error("Failed to verify %s: %s", table_name, e)
         return {"row_count": 0, "has_data": False}
 
 
@@ -178,7 +177,7 @@ def load_all_files() -> Dict[str, bool]:
         for filename, table_name in FILE_TABLE_MAPPING.items():
             file_path = DATA_DIR / filename
 
-            logger.info(f"Processing {filename} -> {table_name}")
+            logger.info("Processing %s -> %s", filename, table_name)
 
             # Check if file exists
             if not check_file_exists(file_path):
@@ -197,22 +196,24 @@ def load_all_files() -> Dict[str, bool]:
 
                 if stats["row_count"] > 0:
                     logger.info(
-                        f"✓ Successfully loaded {filename}: {stats['row_count']} rows"
+                        "✓ Successfully loaded %s: %d rows",
+                        filename,
+                        stats["row_count"],
                     )
                     results[filename] = True
                 else:
-                    logger.warning(f"✗ No data found in {table_name} after load")
+                    logger.warning("✗ No data found in %s after load", table_name)
                     results[filename] = False
 
             except Exception as e:
-                logger.error(f"✗ Failed to load {filename}: {e}")
+                logger.error("✗ Failed to load %s: %s", filename, e)
                 results[filename] = False
 
         cursor.close()
         conn.close()
 
     except Exception as e:
-        logger.error(f"Database operation failed: {e}")
+        logger.error("Database operation failed: %s", e)
         return {filename: False for filename in FILE_TABLE_MAPPING.keys()}
 
     return results
@@ -224,7 +225,7 @@ def main():
 
     # Check if data directory exists
     if not DATA_DIR.exists():
-        logger.error(f"Data directory not found: {DATA_DIR}")
+        logger.error("Data directory not found: %s", DATA_DIR)
         sys.exit(1)
 
     # Load all files
@@ -237,10 +238,10 @@ def main():
 
     for filename, success in results.items():
         status = "✓ SUCCESS" if success else "✗ FAILED"
-        logger.info(f"{filename:<25} {status}")
+        logger.info("%-25s %s", filename, status)
 
     logger.info(
-        f"\nCompleted: {successful_loads}/{total_files} files loaded successfully"
+        "Completed: %d/%d files loaded successfully", successful_loads, total_files
     )
 
     if successful_loads == total_files:
