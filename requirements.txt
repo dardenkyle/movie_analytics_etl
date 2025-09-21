@@ -1,0 +1,19 @@
+# Movie Analytics ETL - Python Dependencies
+
+# Core ETL dependencies
+psycopg2-binary==2.9.7
+dbt-postgres==1.9.1
+
+# Data analysis and visualization
+pandas==2.0.3
+plotly==5.17.0
+numpy==1.24.3
+
+# Optional: Jupyter notebook support
+jupyter==1.0.0
+ipykernel==6.25.0
+
+# Development and testing
+black==23.7.0
+flake8==6.0.0
+pytest==7.4.0
