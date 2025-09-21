@@ -67,19 +67,24 @@ jobs:
           echo -e "tconst\ttitleType\tprimaryTitle\toriginalTitle\tisAdult\tstartYear\tendYear\truntimeMinutes\tgenres" > data_lake/landing/archive/title.basics.tsv
           echo -e "tt0000001\tshort\tCarmencita\tCarmencita\t0\t1894\t\\N\t1\tDocumentary,Short" >> data_lake/landing/archive/title.basics.tsv
           echo -e "tt0000002\tshort\tLe clown et ses chiens\tLe clown et ses chiens\t0\t1892\t\\N\t5\tAnimation,Short" >> data_lake/landing/archive/title.basics.tsv
+          echo -e "tt0000003\tmovie\tTest Movie\tTest Movie\t0\t2000\t\\N\t120\tDrama,Action" >> data_lake/landing/archive/title.basics.tsv
 
           echo -e "tconst\taverageRating\tnumVotes" > data_lake/landing/archive/title.ratings.tsv
           echo -e "tt0000001\t5.7\t1976" >> data_lake/landing/archive/title.ratings.tsv
           echo -e "tt0000002\t6.0\t267" >> data_lake/landing/archive/title.ratings.tsv
+          echo -e "tt0000003\t7.5\t1000" >> data_lake/landing/archive/title.ratings.tsv
 
           echo -e "nconst\tprimaryName\tbirthYear\tdeathYear\tprimaryProfession\tknownForTitles" > data_lake/landing/archive/name.basics.tsv
           echo -e "nm0000001\tFred Astaire\t1899\t1987\tactor,miscellaneous,producer\ttt0053137,tt0072308,tt0043044,tt0050419" >> data_lake/landing/archive/name.basics.tsv
+          echo -e "nm0000002\tTest Actor\t1970\t\\N\tactor\ttt0000003" >> data_lake/landing/archive/name.basics.tsv
 
           echo -e "tconst\tordering\tnconst\tcategory\tjob\tcharacters" > data_lake/landing/archive/title.principals.tsv
           echo -e "tt0000001\t1\tnm0000001\tactor\t\\N\t[\"Self\"]" >> data_lake/landing/archive/title.principals.tsv
+          echo -e "tt0000003\t1\tnm0000002\tactor\t\\N\t[\"Hero\"]" >> data_lake/landing/archive/title.principals.tsv
 
           echo -e "titleId\tordering\ttitle\tregion\tlanguage\ttypes\tattributes\tisOriginalTitle" > data_lake/landing/archive/title.akas.tsv
           echo -e "tt0000001\t1\tCarmencita\tUS\t\\N\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
+          echo -e "tt0000003\t1\tTest Movie\tUS\ten\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
 
       - name: Setup raw database schema
         run: |
