@@ -1,0 +1,381 @@
+version: 2
+
+models:
+  - name: dim_titles
+    description: "Dimension table containing movies, TV shows, and other titles with enhanced business attributes for analytics"
+    columns:
+      - name: title_id
+        description: "Primary key - unique identifier for each title (tconst from IMDb)"
+        tests:
+          - not_null
+          - unique
+
+      - name: primary_title
+        description: "Primary display title of the movie/show"
+        tests:
+          - not_null
+
+      - name: original_title
+        description: "Original title in the original language"
+
+      - name: title_type
+        description: "Type of content (movie, tvSeries, tvEpisode, etc.)"
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                [
+                  "movie",
+                  "short",
+                  "tvEpisode",
+                  "tvMiniSeries",
+                  "tvMovie",
+                  "tvSeries",
+                  "tvShort",
+                  "tvSpecial",
+                  "video",
+                  "videoGame",
+                ]
+
+      - name: is_adult
+        description: "Flag indicating if content is adult-oriented"
+        tests:
+          - not_null
+
+      - name: content_rating_category
+        description: "Business-friendly content rating classification"
+        tests:
+          - accepted_values:
+              values: ["Adult Content", "General Audience"]
+
+      - name: start_year
+        description: "Year the title was released or first aired"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 1800 AND <= extract(year from current_date)"
+              config:
+                severity: warn
+
+      - name: end_year
+        description: "End year for TV series or null for movies"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= start_year"
+              config:
+                severity: warn
+                where: "end_year is not null and start_year is not null"
+
+      - name: decade
+        description: "Decade when the title was released (e.g., 1990, 2000)"
+
+      - name: series_duration_years
+        description: "For TV series, the number of years it ran"
+
+      - name: runtime_minutes
+        description: "Runtime in minutes"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0 AND < 1000"
+              config:
+                severity: warn
+                where: "runtime_minutes is not null"
+
+      - name: runtime_category
+        description: "Categorized runtime for analysis"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Unknown",
+                  "Short (≤30 min)",
+                  "Standard (31-90 min)",
+                  "Long (91-180 min)",
+                  "Extended (>180 min)",
+                ]
+
+      - name: content_category
+        description: "High-level content categorization"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Movie",
+                  "TV Series",
+                  "TV Episode",
+                  "Short Film",
+                  "TV Special",
+                  "Video",
+                  "Video Game",
+                  "Other",
+                ]
+
+      - name: genres_raw
+        description: "Comma-separated list of genres from IMDb"
+
+      - name: genre_count
+        description: "Number of genres assigned to this title"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: is_ongoing_series
+        description: "Flag indicating if TV series is still ongoing"
+
+      - name: is_recent_title
+        description: "Flag indicating if title was released in last 5 years"
+
+      - name: title_character_count
+        description: "Length of the primary title in characters"
+
+      - name: title_length_category
+        description: "Categorized title length"
+        tests:
+          - accepted_values:
+              values: ["Short Title", "Medium Title", "Long Title"]
+
+  - name: dim_people
+    description: "Dimension table containing people (actors, directors, writers) with career and demographic insights"
+    columns:
+      - name: person_id
+        description: "Primary key - unique identifier for each person (nconst from IMDb)"
+        tests:
+          - not_null
+          - unique
+
+      - name: primary_name
+        description: "Primary name of the person"
+        tests:
+          - not_null
+
+      - name: birth_year
+        description: "Year the person was born"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 1800 AND <= extract(year from current_date)"
+              config:
+                severity: warn
+                where: "birth_year is not null"
+
+      - name: death_year
+        description: "Year the person died (null if still alive)"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> birth_year"
+              config:
+                severity: warn
+                where: "death_year is not null and birth_year is not null"
+
+      - name: age_or_current_age
+        description: "Age at death or current age if still alive"
+
+      - name: is_deceased
+        description: "Flag indicating if person is deceased"
+        tests:
+          - not_null
+
+      - name: birth_decade
+        description: "Decade when person was born"
+
+      - name: death_decade
+        description: "Decade when person died (if applicable)"
+
+      - name: age_category
+        description: "Current age category for analysis"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Unknown",
+                  "Young (Under 30)",
+                  "Mid-Career (30-49)",
+                  "Veteran (50-69)",
+                  "Elder (70+)",
+                ]
+
+      - name: professions_raw
+        description: "Comma-separated list of professions from IMDb"
+
+      - name: profession_count
+        description: "Number of professions listed for this person"
+
+      - name: primary_profession
+        description: "First profession listed (typically primary career)"
+
+      - name: is_actor
+        description: "Flag indicating if person is an actor/actress"
+        tests:
+          - not_null
+
+      - name: is_director
+        description: "Flag indicating if person is a director"
+        tests:
+          - not_null
+
+      - name: is_writer
+        description: "Flag indicating if person is a writer"
+        tests:
+          - not_null
+
+      - name: is_producer
+        description: "Flag indicating if person is a producer"
+        tests:
+          - not_null
+
+      - name: is_composer
+        description: "Flag indicating if person is a composer"
+        tests:
+          - not_null
+
+      - name: is_multi_role_professional
+        description: "Flag indicating if person has multiple professional roles"
+        tests:
+          - not_null
+
+      - name: known_for_titles_raw
+        description: "Comma-separated list of titles person is known for"
+
+      - name: known_for_title_count
+        description: "Number of titles person is known for"
+
+      - name: generation
+        description: "Generational cohort based on birth year"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Unknown Generation",
+                  "Pre-Silent Generation",
+                  "Silent Generation",
+                  "Baby Boomers",
+                  "Generation X",
+                  "Millennials",
+                  "Generation Z",
+                  "Generation Alpha",
+                ]
+
+  - name: fact_ratings
+    description: "Fact table containing ratings data with statistical analysis and business categorizations"
+    columns:
+      - name: title_id
+        description: "Foreign key to dim_titles"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_titles')
+              field: title_id
+
+      - name: average_rating
+        description: "Average rating from IMDb users (scale 1-10)"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 1.0 AND <= 10.0"
+              config:
+                where: "average_rating is not null"
+
+      - name: num_votes
+        description: "Number of votes/ratings received"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+              config:
+                where: "num_votes is not null"
+
+      - name: title_type
+        description: "Type of content (inherited from dim_titles)"
+
+      - name: content_category
+        description: "Content category (inherited from dim_titles)"
+
+      - name: start_year
+        description: "Release year (inherited from dim_titles)"
+
+      - name: decade
+        description: "Release decade (inherited from dim_titles)"
+
+      - name: rating_category
+        description: "Categorized rating for business analysis"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Not Rated",
+                  "Poor (< 3.0)",
+                  "Below Average (3.0-4.9)",
+                  "Average (5.0-6.9)",
+                  "Good (7.0-7.9)",
+                  "Excellent (8.0-8.9)",
+                  "Outstanding (9.0+)",
+                ]
+
+      - name: vote_volume_category
+        description: "Categorized vote volume for analysis"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "No Votes",
+                  "Minimal (< 100)",
+                  "Low (100-999)",
+                  "Moderate (1K-9K)",
+                  "High (10K-99K)",
+                  "Very High (100K-999K)",
+                  "Massive (1M+)",
+                ]
+
+      - name: is_statistically_significant
+        description: "Flag for ratings with sufficient votes (1000+)"
+        tests:
+          - not_null
+
+      - name: is_highly_rated_popular
+        description: "Flag for titles with high ratings (8.0+) and high votes (10K+)"
+        tests:
+          - not_null
+
+      - name: is_mainstream_success
+        description: "Flag for titles with good ratings (7.0+) and massive votes (100K+)"
+        tests:
+          - not_null
+
+      - name: popularity_score
+        description: "Weighted score combining rating and vote volume"
+
+      - name: rating_confidence
+        description: "Confidence level based on vote volume"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "No Confidence",
+                  "Very Low Confidence",
+                  "Low Confidence",
+                  "Medium Confidence",
+                  "High Confidence",
+                  "Very High Confidence",
+                ]
+
+      - name: success_category
+        description: "Overall success categorization"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "Critical Acclaim",
+                  "Popular Success",
+                  "Commercial Success",
+                  "Critical Failure",
+                  "High Visibility",
+                  "Standard Release",
+                ]
+
+      - name: quality_popularity_quadrant
+        description: "Quality vs popularity matrix positioning"
+        tests:
+          - accepted_values:
+              values:
+                [
+                  "High Quality, High Popularity",
+                  "High Quality, Low Popularity",
+                  "Low Quality, High Popularity",
+                  "Low Quality, Low Popularity",
+                ]
