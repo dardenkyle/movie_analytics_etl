@@ -23,7 +23,7 @@ An end-to-end data engineering project using **PostgreSQL and dbt** to process I
 **Current Status:**
 
 - 📊 **877K+ Movies** and **352K+ TV Series** processed and ready for analysis
-- � **14.7M+ People** with career metrics and generational analysis
+- 📊 **14.7M+ People** with career metrics and generational analysis
 - 📊 **99K+ High-Quality Ratings** with statistical significance testing
 - 📊 **Complete Star Schema** with facts, dimensions, and bridge tables
 
