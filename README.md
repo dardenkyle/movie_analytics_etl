@@ -176,7 +176,8 @@ movie_analytics_etl/
 │   ├── name.basics.tsv        # ~13M people (actors, directors, etc.)
 │   ├── title.principals.tsv   # ~57M cast/crew relationships
 │   └── title.akas.tsv         # ~94M alternative titles
-├── ingestion/load_raw.py      # Automated data loading script
+├── ingestion/load_raw.py      # Automated data loading script with environment detection
+├── ingestion/load_test_data.py # CI-specific test data loader
 ├── analytics/                 # Business analytics and dashboards
 │   ├── create_dashboard.py   # Interactive HTML dashboard generator
 │   ├── sample_queries.md     # 12 business intelligence queries
@@ -186,7 +187,10 @@ movie_analytics_etl/
 │   ├── models/marts/          # 4 business-ready dimensional tables
 │   ├── models/sources.yml     # Raw data source definitions
 │   └── tests/                 # Custom data quality tests
-└── .github/                   # AI agent instructions and project context
+├── .github/                   # CI/CD workflows and project documentation
+│   └── workflows/main.yml     # Automated testing pipeline
+├── TESTING_STRATEGY.md        # Comprehensive CI/CD testing methodology
+└── .pre-commit-config.yaml    # Code quality automation hooks
 ```
 
 ## Data Quality & Testing
@@ -228,10 +232,19 @@ Our dbt project includes comprehensive data quality measures:
 - **API Layer**: RESTful endpoints for dashboard integration
 - **Cloud Migration**: AWS/GCP deployment with managed services
 
+## CI/CD & Quality Assurance
+
+- **GitHub Actions Pipeline**: Automated testing with schema validation and code quality checks
+- **Pre-commit Hooks**: Automated code formatting, linting, and quality gates
+- **Testing Strategy**: Infrastructure-focused CI with comprehensive documentation ([see TESTING_STRATEGY.md](TESTING_STRATEGY.md))
+- **Environment Detection**: Smart loading scripts that work in both Docker and CI environments
+- **Code Quality**: Enforced standards with flake8, black formatting, and automated validation
+
 ## Architecture Highlights
 
 - **Dimensional Modeling**: Star schema following Kimball methodology
 - **Data Quality**: Comprehensive testing with 80%+ pass rate
+- **Robust CI/CD**: GitHub Actions pipeline with environment-aware testing
 - **Scalable Design**: Handles 176M+ records with room for growth
 - **Modern Stack**: dbt + PostgreSQL + Python analytics
 - **Documentation**: Self-documenting with dbt and inline comments
