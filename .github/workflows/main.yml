@@ -8,31 +8,114 @@ on:
     branches: [main]
 
 jobs:
-  data-quality:
+  code-quality:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pre-commit
+
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
+
+  data-pipeline-test:
+    runs-on: ubuntu-latest
+    needs: code-quality
     services:
       postgres:
         image: postgres:16
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: analytics
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create sample test data
+        run: |
+          # Create minimal test data structure
+          mkdir -p data_lake/landing/archive
+
+          # Create minimal test TSV files with headers and a few rows
+          echo -e "tconst\ttitleType\tprimaryTitle\toriginalTitle\tisAdult\tstartYear\tendYear\truntimeMinutes\tgenres" > data_lake/landing/archive/title.basics.tsv
+          echo -e "tt0000001\tshort\tCarmencita\tCarmencita\t0\t1894\t\\N\t1\tDocumentary,Short" >> data_lake/landing/archive/title.basics.tsv
+          echo -e "tt0000002\tshort\tLe clown et ses chiens\tLe clown et ses chiens\t0\t1892\t\\N\t5\tAnimation,Short" >> data_lake/landing/archive/title.basics.tsv
+
+          echo -e "tconst\taverageRating\tnumVotes" > data_lake/landing/archive/title.ratings.tsv
+          echo -e "tt0000001\t5.7\t1976" >> data_lake/landing/archive/title.ratings.tsv
+          echo -e "tt0000002\t6.0\t267" >> data_lake/landing/archive/title.ratings.tsv
+
+          echo -e "nconst\tprimaryName\tbirthYear\tdeathYear\tprimaryProfession\tknownForTitles" > data_lake/landing/archive/name.basics.tsv
+          echo -e "nm0000001\tFred Astaire\t1899\t1987\tactor,miscellaneous,producer\ttt0053137,tt0072308,tt0043044,tt0050419" >> data_lake/landing/archive/name.basics.tsv
+
+          echo -e "tconst\tordering\tnconst\tcategory\tjob\tcharacters" > data_lake/landing/archive/title.principals.tsv
+          echo -e "tt0000001\t1\tnm0000001\tactor\t\\N\t[\"Self\"]" >> data_lake/landing/archive/title.principals.tsv
+
+          echo -e "titleId\tordering\ttitle\tregion\tlanguage\ttypes\tattributes\tisOriginalTitle" > data_lake/landing/archive/title.akas.tsv
+          echo -e "tt0000001\t1\tCarmencita\tUS\t\\N\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
+
+      - name: Setup raw database schema
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d analytics -f sql/raw_schema.sql
+
       - name: Load test data
-        run: python ingestion/load_raw.py --sample
+        run: python ingestion/load_raw.py
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: analytics
+
+      - name: Setup dbt
+        run: |
+          cd dbt/movie_analytics
+          dbt deps --quiet
+
       - name: Run dbt transformations
-        run: cd dbt/movie_analytics && dbt run
+        run: |
+          cd dbt/movie_analytics
+          dbt run --select staging --target ci
+        env:
+          DBT_PROFILES_DIR: .
+
       - name: Run data quality tests
-        run: cd dbt/movie_analytics && dbt test
-      - name: Generate docs
-        run: cd dbt/movie_analytics && dbt docs generate
+        run: |
+          cd dbt/movie_analytics
+          dbt test --select staging --target ci
+        env:
+          DBT_PROFILES_DIR: .
+
+      - name: Generate documentation
+        run: |
+          cd dbt/movie_analytics
+          dbt docs generate --quiet --target ci
+        env:
+          DBT_PROFILES_DIR: .

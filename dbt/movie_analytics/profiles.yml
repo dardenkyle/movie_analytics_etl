@@ -1,0 +1,29 @@
+movie_analytics:
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', 5432) | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'postgres') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'postgres') }}"
+      database: "{{ env_var('POSTGRES_DB', 'analytics') }}"
+      schema: staging
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      retries: 1
+
+    ci:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: postgres
+      password: postgres
+      database: analytics
+      schema: staging
+      threads: 2
+      keepalives_idle: 0
+      connect_timeout: 10
+      retries: 1
+
+  target: dev
