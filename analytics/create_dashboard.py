@@ -34,15 +34,15 @@ def execute_query(query):
 def create_movies_by_decade_chart():
     """Create chart showing movie production and ratings by decade"""
     query = """
-    SELECT 
+    SELECT
         dt.decade::int as decade,
         COUNT(*) as movie_count,
         AVG(CASE WHEN fr.average_rating IS NOT NULL THEN fr.average_rating END) as avg_rating,
         COUNT(CASE WHEN fr.is_highly_rated_popular THEN 1 END) as highly_rated_count
     FROM staging_marts.dim_titles dt
     LEFT JOIN staging_marts.fact_ratings fr ON dt.title_id = fr.title_id
-    WHERE 
-        dt.content_category = 'Movie' 
+    WHERE
+        dt.content_category = 'Movie'
         AND dt.decade IS NOT NULL
         AND dt.decade >= 1920
         AND dt.decade <= 2020
@@ -102,20 +102,20 @@ def create_genre_popularity_chart():
     """Create chart showing most popular genres"""
     query = """
     WITH genre_stats AS (
-        SELECT 
+        SELECT
             TRIM(unnest(string_to_array(genres_raw, ','))) as genre,
             COUNT(*) as title_count,
             AVG(fr.average_rating) as avg_rating,
             SUM(fr.num_votes) as total_votes
         FROM staging_marts.dim_titles dt
         JOIN staging_marts.fact_ratings fr ON dt.title_id = fr.title_id
-        WHERE 
-            dt.genres_raw IS NOT NULL 
+        WHERE
+            dt.genres_raw IS NOT NULL
             AND fr.num_votes IS NOT NULL
             AND dt.content_category = 'Movie'
         GROUP BY TRIM(unnest(string_to_array(genres_raw, ',')))
     )
-    SELECT 
+    SELECT
         genre,
         title_count,
         ROUND(avg_rating, 2) as avg_rating,
@@ -145,7 +145,7 @@ def create_genre_popularity_chart():
 def create_quality_vs_popularity_chart():
     """Create scatter plot of quality vs popularity"""
     query = """
-    SELECT 
+    SELECT
         dt.primary_title,
         fr.average_rating,
         fr.num_votes,
@@ -154,8 +154,8 @@ def create_quality_vs_popularity_chart():
         COALESCE(fr.success_category, 'Average Quality') as success_category
     FROM staging_marts.dim_titles dt
     JOIN staging_marts.fact_ratings fr ON dt.title_id = fr.title_id
-    WHERE 
-        fr.average_rating IS NOT NULL 
+    WHERE
+        fr.average_rating IS NOT NULL
         AND fr.num_votes IS NOT NULL
         AND fr.num_votes >= 100  -- Lower threshold for more data points
         AND dt.content_category = 'Movie'
@@ -193,22 +193,22 @@ def create_quality_vs_popularity_chart():
 def create_runtime_evolution_chart():
     """Create chart showing how movie runtimes have evolved"""
     query = """
-    SELECT 
+    SELECT
         dt.decade::int as decade,
-        CASE 
+        CASE
             WHEN runtime_minutes <= 90 THEN 'Short (90 min or less)'
             WHEN runtime_minutes <= 180 THEN 'Medium (91-180 min)'
             ELSE 'Long (over 180 min)'
         END as runtime_group,
         COUNT(*) as movie_count
     FROM staging_marts.dim_titles dt
-    WHERE 
+    WHERE
         dt.content_category = 'Movie'
         AND dt.decade IS NOT NULL
         AND runtime_minutes IS NOT NULL
         AND dt.decade >= 1960  -- Start from 1960 for better data
         AND dt.decade <= 2020
-    GROUP BY dt.decade::int, CASE 
+    GROUP BY dt.decade::int, CASE
             WHEN runtime_minutes <= 90 THEN 'Short (90 min or less)'
             WHEN runtime_minutes <= 180 THEN 'Medium (91-180 min)'
             ELSE 'Long (over 180 min)'
@@ -233,24 +233,24 @@ def create_runtime_evolution_chart():
 def create_people_generation_chart():
     """Create chart showing people distribution by generation and profession"""
     query = """
-    SELECT 
+    SELECT
         generation,
-        CASE 
+        CASE
             WHEN is_actor THEN 'Actor'
-            WHEN is_director THEN 'Director'  
+            WHEN is_director THEN 'Director'
             WHEN is_writer THEN 'Writer'
             WHEN is_producer THEN 'Producer'
             ELSE 'Other'
         END as primary_role,
         COUNT(*) as person_count
     FROM staging_marts.dim_people
-    WHERE 
+    WHERE
         generation != 'Unknown Generation'
         AND (is_actor OR is_director OR is_writer OR is_producer)
-    GROUP BY generation, 
-        CASE 
+    GROUP BY generation,
+        CASE
             WHEN is_actor THEN 'Actor'
-            WHEN is_director THEN 'Director'  
+            WHEN is_director THEN 'Director'
             WHEN is_writer THEN 'Writer'
             WHEN is_producer THEN 'Producer'
             ELSE 'Other'
@@ -335,7 +335,7 @@ def create_dashboard():
             <h1>[DASHBOARD] Movie Analytics Dashboard</h1>
             <p>Insights from IMDb Dataset - Processed through dbt Data Mart</p>
         </div>
-        
+
         <div class="metrics">
             <div class="metric">
                 <h3>11.9M+</h3>

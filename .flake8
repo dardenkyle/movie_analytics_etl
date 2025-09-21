@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 100
+extend-ignore = E203, W503, E501, F401, W291, F541, F841
+per-file-ignores =
+    analytics/create_dashboard.py:F401,F541,E501
+    ingestion/load_raw.py:F841

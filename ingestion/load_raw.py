@@ -118,8 +118,8 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
     container_path = f"/data/landing/archive/{file_path.name}"
 
     copy_sql = f"""
-        COPY {table_name} 
-        FROM '{container_path}' 
+        COPY {table_name}
+        FROM '{container_path}'
         WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)
     """
 

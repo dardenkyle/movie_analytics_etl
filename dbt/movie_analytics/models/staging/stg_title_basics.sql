@@ -11,7 +11,7 @@ cleaned as (
     select
         -- Primary key
         tconst as title_id,
-        -- Basic title information  
+        -- Basic title information
         titletype as title_type,
         primarytitle as primary_title,
         originaltitle as original_title,
@@ -45,7 +45,7 @@ cleaned as (
     -- Filter out records with invalid title types
     where
         titletype in (
-            'movie', 'short', 'tvEpisode', 'tvMiniSeries', 'tvMovie', 
+            'movie', 'short', 'tvEpisode', 'tvMiniSeries', 'tvMovie',
             'tvSeries', 'tvShort', 'tvSpecial', 'video', 'videoGame'
         )
 )

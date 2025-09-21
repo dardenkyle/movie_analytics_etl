@@ -78,13 +78,13 @@ DATA_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c
 
 if [ "$DATA_COUNT" == "0" ] || [ -z "$DATA_COUNT" ]; then
     print_warning "Raw data not found. Loading IMDb datasets..."
-    
+
     # Create raw schema if it doesn't exist
     docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
-    
+
     # Load raw data
     python ingestion/load_raw.py
-    
+
     print_success "Raw data loaded successfully"
 else
     print_success "Raw data already loaded ($DATA_COUNT title records found)"
@@ -145,7 +145,7 @@ PEOPLE_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t 
 RATINGS_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.fact_ratings;" | tr -d ' ')
 
 echo "• Movies/TV Shows: $TITLES_COUNT records"
-echo "• People: $PEOPLE_COUNT records" 
+echo "• People: $PEOPLE_COUNT records"
 echo "• Ratings: $RATINGS_COUNT records"
 
 echo ""

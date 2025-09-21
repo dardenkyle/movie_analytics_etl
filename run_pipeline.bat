@@ -56,13 +56,13 @@ if "%DATA_COUNT%"=="" set DATA_COUNT=0
 
 if %DATA_COUNT%==0 (
     echo ⚠️  Raw data not found. Loading IMDb datasets...
-    
+
     REM Create raw schema if it doesn't exist
     docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
-    
+
     REM Load raw data
     python ingestion\load_raw.py
-    
+
     echo ✅ Raw data loaded successfully
 ) else (
     echo ✅ Raw data already loaded (%DATA_COUNT% title records found^)
@@ -79,7 +79,7 @@ echo 📋 Step 5: Running dbt Transformations
 echo Building staging models...
 dbt run --select staging --quiet
 
-echo Building marts models...  
+echo Building marts models...
 dbt run --select marts --quiet
 
 echo ✅ dbt models built successfully
@@ -110,7 +110,7 @@ echo 📊 Final Data Summary:
 echo ----------------------
 
 for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_titles;"') do set TITLES_COUNT=%%i
-for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_people;"') do set PEOPLE_COUNT=%%i  
+for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_people;"') do set PEOPLE_COUNT=%%i
 for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.fact_ratings;"') do set RATINGS_COUNT=%%i
 
 echo • Movies/TV Shows: %TITLES_COUNT% records
