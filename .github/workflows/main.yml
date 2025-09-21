@@ -1,0 +1,38 @@
+# .github/workflows/main.yml
+name: Movie Analytics ETL Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  data-quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load test data
+        run: python ingestion/load_raw.py --sample
+      - name: Run dbt transformations
+        run: cd dbt/movie_analytics && dbt run
+      - name: Run data quality tests
+        run: cd dbt/movie_analytics && dbt test
+      - name: Generate docs
+        run: cd dbt/movie_analytics && dbt docs generate
