@@ -1,0 +1,1 @@
+"""IMDb data ingestion package."""

@@ -6,11 +6,12 @@ Loads minimal test data instead of full IMDb datasets.
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any
 
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+from ingestion.config import DB_CONFIG
 
 # Configure logging
 logging.basicConfig(
@@ -19,15 +20,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-
-# Database connection parameters
-DB_CONFIG: Dict[str, Any] = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "analytics",
-    "user": "postgres",
-    "password": "postgres",
-}
 
 # Test data mapping
 TEST_DATA_MAPPING = {
@@ -67,8 +59,9 @@ def get_database_connection():
 
 def load_test_file(cursor, file_path: Path, table_name: str) -> int:
     """Load test TSV file into database table."""
-    # Use local file paths for CI
-    container_path = str(file_path)
+    # Absolute local path, since server-side COPY resolves relative
+    # paths against the Postgres data directory
+    container_path = str(file_path.resolve())
 
     copy_sql = sql.SQL(
         "COPY {table} FROM {path} "

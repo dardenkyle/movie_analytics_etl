@@ -9,11 +9,13 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
 
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+from ingestion.config import DB_CONFIG
 
 # Configure logging
 logging.basicConfig(
@@ -22,15 +24,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-
-# Database connection parameters
-DB_CONFIG: Dict[str, Any] = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "analytics",
-    "user": "postgres",
-    "password": "postgres",
-}
 
 # Mapping of TSV files to database tables
 FILE_TABLE_MAPPING = {
@@ -142,8 +135,9 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
     is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
 
     if is_ci:
-        # CI environment: use local file paths
-        container_path = str(file_path)
+        # CI environment: absolute local path, since server-side COPY
+        # resolves relative paths against the Postgres data directory
+        container_path = str(file_path.resolve())
     else:
         # Docker environment: use mounted volume path
         container_path = f"/data/landing/archive/{file_path.name}"
