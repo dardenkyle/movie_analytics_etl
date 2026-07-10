@@ -5,7 +5,6 @@ Loads minimal test data instead of full IMDb datasets.
 
 import logging
 import sys
-import os
 from pathlib import Path
 from typing import Dict, Any
 

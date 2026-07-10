@@ -197,7 +197,7 @@ def load_all_files() -> Dict[str, bool]:
                 clear_table(cursor, table_name)
 
                 # Load new data
-                rows_loaded = load_tsv_file(cursor, file_path, table_name)
+                load_tsv_file(cursor, file_path, table_name)
 
                 # Verify load
                 stats = verify_data_load(cursor, table_name)

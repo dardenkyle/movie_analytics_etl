@@ -1,17 +1,10 @@
 # .pre-commit-config.yaml (in root directory)
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.7.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.21
     hooks:
-      - id: black
-        files: \.(py)$
-        args: [--line-length=88]
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        files: \.(py)$
+      - id: ruff-check
+      - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
