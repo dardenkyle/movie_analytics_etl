@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Configure logging
@@ -41,6 +42,26 @@ FILE_TABLE_MAPPING = {
 }
 
 DATA_DIR = Path("data_lake/landing/archive")
+
+
+def table_identifier(table_name: str) -> sql.Identifier:
+    """
+    Convert a schema-qualified table name into a safely quoted identifier.
+
+    Args:
+        table_name: Table name, optionally schema-qualified (e.g. "raw.title_basics")
+
+    Returns:
+        sql.Identifier: Composable identifier for use in SQL statements
+
+    Raises:
+        ValueError: If the name is not "table" or "schema.table" with
+            non-empty parts
+    """
+    parts = table_name.split(".")
+    if len(parts) > 2 or not all(parts):
+        raise ValueError(f"Invalid table name: {table_name!r}")
+    return sql.Identifier(*parts)
 
 
 def get_database_connection():
@@ -93,7 +114,9 @@ def clear_table(cursor, table_name: str) -> None:
         table_name: Name of table to clear
     """
     try:
-        cursor.execute(f"TRUNCATE TABLE {table_name}")
+        cursor.execute(
+            sql.SQL("TRUNCATE TABLE {table}").format(table=table_identifier(table_name))
+        )
         logger.info("Cleared existing data from %s", table_name)
     except psycopg2.Error as e:
         logger.error("Failed to clear table %s: %s", table_name, e)
@@ -125,11 +148,13 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
         # Docker environment: use mounted volume path
         container_path = f"/data/landing/archive/{file_path.name}"
 
-    copy_sql = f"""
-        COPY {table_name}
-        FROM '{container_path}'
-        WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)
-    """
+    copy_sql = sql.SQL(
+        "COPY {table} FROM {path} "
+        "WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)"
+    ).format(
+        table=table_identifier(table_name),
+        path=sql.Literal(container_path),
+    )
 
     try:
         cursor.execute(copy_sql)
@@ -153,11 +178,19 @@ def verify_data_load(cursor, table_name: str) -> Dict[str, int]:
         dict: Table statistics
     """
     try:
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        cursor.execute(
+            sql.SQL("SELECT COUNT(*) FROM {table}").format(
+                table=table_identifier(table_name)
+            )
+        )
         row_count = cursor.fetchone()[0]
 
         # Get a sample record to verify structure
-        cursor.execute(f"SELECT * FROM {table_name} LIMIT 1")
+        cursor.execute(
+            sql.SQL("SELECT * FROM {table} LIMIT 1").format(
+                table=table_identifier(table_name)
+            )
+        )
         sample_row = cursor.fetchone()
 
         return {
