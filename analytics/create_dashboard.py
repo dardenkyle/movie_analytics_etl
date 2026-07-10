@@ -8,7 +8,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.offline as pyo
 
 # Database connection configuration
 DB_CONFIG = {
@@ -404,9 +403,9 @@ def create_dashboard():
     with open("movie_analytics_dashboard.html", "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"\n[COMPLETE] Dashboard created successfully!")
-    print(f"[FILE] Saved as: movie_analytics_dashboard.html")
-    print(f"[WEB] Open the file in your browser to view the interactive dashboard")
+    print("\n[COMPLETE] Dashboard created successfully!")
+    print("[FILE] Saved as: movie_analytics_dashboard.html")
+    print("[WEB] Open the file in your browser to view the interactive dashboard")
 
 
 def get_summary_stats():
