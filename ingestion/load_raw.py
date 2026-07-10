@@ -44,6 +44,15 @@ FILE_TABLE_MAPPING = {
 DATA_DIR = Path("data_lake/landing/archive")
 
 
+def _table_identifier(table_name: str):
+    """Compose schema.table as SQL identifiers (supports raw.title_basics)."""
+    if "." in table_name:
+        schema, table = table_name.split(".", 1)
+        return sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(table))
+    return sql.Identifier(table_name)
+
+
+
 def get_database_connection():
     """
     Establish connection to PostgreSQL database.
