@@ -20,9 +20,14 @@ dev = [
     "ruff>=0.15.21",
 ]
 
-[tool.uv]
-# Analysis/ETL scripts only; nothing is built or installed as a package.
-package = false
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Installed editably by uv sync so ingestion/ and analytics/ are
+# importable regardless of how the scripts are invoked
+[tool.hatch.build.targets.wheel]
+packages = ["ingestion", "analytics"]
 
 [tool.ruff]
 line-length = 88

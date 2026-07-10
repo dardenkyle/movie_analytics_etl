@@ -175,6 +175,7 @@ movie_analytics_etl/
 ├── sql/raw_schema.sql            # Raw table definitions for IMDb data
 ├── data_lake/landing/archive/    # IMDb .tsv files (176M+ records, gitignored)
 ├── ingestion/
+│   ├── config.py                 # Shared DB config from POSTGRES_* env vars
 │   ├── load_raw.py               # Bulk loader with environment detection
 │   └── load_test_data.py         # CI-specific test data loader
 ├── dbt/movie_analytics/

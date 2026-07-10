@@ -9,14 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Database connection configuration
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "analytics",
-    "user": "postgres",
-    "password": "postgres",
-}
+from ingestion.config import DB_CONFIG
 
 
 def get_db_connection():
