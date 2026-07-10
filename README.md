@@ -7,253 +7,206 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Last Commit](https://img.shields.io/github/last-commit/dardenkyle/movie_analytics_etl)
 
-An end-to-end data engineering project using **PostgreSQL and dbt** to process IMDb datasets into a dimensional data warehouse.
+An end-to-end data engineering pipeline that ingests the public IMDb
+datasets (176M+ records across 5 files) into PostgreSQL and transforms
+them with dbt into a dimensional data warehouse following Kimball
+methodology.
 
-## Project Status ✅
+## Architecture
 
-**Completed Components:**
+```
+IMDb TSV files (data lake landing zone)
+        |
+        v
+PostgreSQL raw schema          (bulk COPY via Python loader)
+        |
+        v
+dbt staging models             (type casting, null handling, quality filters)
+        |
+        v
+dbt marts - star schema        (facts, dimensions, bridge table)
+        |
+        v
+Analytics                      (sample queries, Plotly dashboard)
+```
 
-- ✅ **Raw Data Ingestion**: 176M+ records loaded from 5 IMDb TSV files
-- ✅ **dbt Staging Models**: Type casting, null handling, and data quality filters
-- ✅ **Data Quality Framework**: 30 comprehensive tests with 80% pass rate
-- ✅ **Referential Integrity**: Fixed orphaned records and missing references
-- ✅ **dbt Marts Layer**: Complete dimensional model with 4 business tables
-- ✅ **Analytics Dashboard**: Interactive HTML dashboard with 5 visualizations
+- **Ingestion**: Python loader (`ingestion/load_raw.py`) bulk-loads
+  five IMDb TSV files into a `raw` schema using PostgreSQL `COPY`,
+  with environment detection so the same script runs locally against
+  Docker or inside CI.
+- **Staging**: Five dbt staging models handle type casting, conversion
+  of IMDb's `\N` null convention, and data quality filtering.
+- **Marts**: A star schema with dimension, fact, and bridge tables,
+  tested and documented with dbt.
+- **Orchestration**: A single pipeline script (`run_pipeline.sh` /
+  `run_pipeline.bat`) provisions infrastructure, loads data, runs all
+  transformations, and executes the test suite.
 
-**Current Status:**
+## Data Model
 
-- 📊 **877K+ Movies** and **352K+ TV Series** processed and ready for analysis
-- 📊 **14.7M+ People** with career metrics and generational analysis
-- 📊 **99K+ High-Quality Ratings** with statistical significance testing
-- 📊 **Complete Star Schema** with facts, dimensions, and bridge tables
+| Table | Grain | Scale |
+|---|---|---|
+| `dim_titles` | One row per title (movie, series, etc.) | 1.2M+ titles with content categorization |
+| `dim_people` | One row per industry professional | 14.7M+ people with career metrics |
+| `fact_ratings` | One row per rated title | 99K+ ratings with statistical significance flags |
+| `bridge_cast_crew` | One row per person-title relationship | Cast/crew links with role categorization |
 
-## Overview
+Source data volumes: ~10M titles, ~1.4M ratings, ~13M people, ~57M
+cast/crew relationships, and ~94M alternative titles.
 
-- **Raw ingestion**: IMDb `.tsv` files loaded into PostgreSQL (`raw` schema) - **COMPLETED**
-- **Transformations**: dbt staging models with data quality improvements - **COMPLETED**
-- **Data Mart**: Dimensional warehouse (`staging_marts` schema) - **COMPLETED**
-- **Testing**: Comprehensive data quality and integrity tests - **COMPLETED**
-- **Analytics**: Business-ready dashboard and sample queries - **COMPLETED**
+## Tech Stack
+
+- **PostgreSQL 16** (Docker) as the warehouse
+- **dbt 1.9** for transformations, testing, and documentation
+- **Python 3.11** with psycopg2 for ingestion
+- **uv** for dependency management (`pyproject.toml` + `uv.lock`)
+- **GitHub Actions** for CI with pre-commit and ruff for code quality
 
 ## Quickstart
 
 ### Prerequisites
 
 - Docker and Docker Compose
-- [uv](https://docs.astral.sh/uv/) (manages Python 3.11+ and all project dependencies)
+- [uv](https://docs.astral.sh/uv/) (manages Python 3.11+ and all
+  project dependencies)
+- IMDb datasets (https://datasets.imdbws.com/) extracted to
+  `data_lake/landing/archive/`
 
-### 1. Start Infrastructure
+### 1. Start infrastructure
 
 ```bash
 docker compose up -d
 ```
 
-### 2. Set Up Raw Schema (One-time)
+### 2. Create the raw schema (one time)
 
 ```bash
 docker compose exec -T postgres \
-psql -U postgres -d analytics -f /sql/raw_schema.sql
+  psql -U postgres -d analytics -f /sql/raw_schema.sql
 ```
 
-### 3. Load IMDb Data
-
-**Option A: Automated Loading (Recommended)**
+### 3. Load IMDb data
 
 ```bash
 # Install dependencies (creates .venv from uv.lock)
 uv sync
 
-# Load all datasets
 uv run python ingestion/load_raw.py
 ```
 
-**Option B: Manual Loading (Single Table Example)**
+### 4. Run the pipeline
+
+Automated (recommended):
 
 ```bash
-docker compose exec -T postgres \
-psql -U postgres -d analytics -c \
-"COPY raw.title_basics FROM '/data/landing/archive/title.basics.tsv' WITH (FORMAT text, DELIMITER E'\t', NULL '\N', HEADER true);"
+./run_pipeline.sh               # Linux/Mac
+run_pipeline.bat                # Windows
 ```
 
-### 4. Run Complete Pipeline (Automated)
+The script checks prerequisites, starts PostgreSQL, sets up the Python
+environment, loads raw data if needed, runs all dbt transformations,
+executes the data quality test suite, and generates documentation.
 
-**Recommended: Use the automated pipeline script**
-
-```bash
-# Windows
-run_pipeline.bat
-
-# Linux/Mac
-chmod +x run_pipeline.sh
-./run_pipeline.sh
-```
-
-This script will:
-
-- ✅ Check prerequisites and start PostgreSQL
-- ✅ Set up Python environment and dependencies
-- ✅ Load raw IMDb data (if not already loaded)
-- ✅ Run all dbt transformations (staging → marts)
-- ✅ Execute comprehensive data quality tests
-- ✅ Generate documentation
-
-**Manual Option: Run dbt Transformations Step-by-Step**
+Manual, step by step:
 
 ```bash
-# Install dependencies (creates .venv from uv.lock)
-uv sync
-
 cd dbt/movie_analytics
 uv run dbt deps
-
-# Build staging models
 uv run dbt run --select staging
-
-# Build marts models
 uv run dbt run --select marts
-
-# Run data quality tests
 uv run dbt test
 ```
 
-## 📊 Analytics & Visualization
-
-> **Note**: This project focuses primarily on **data engineering** rather than analytics. While a functional dashboard is provided for demonstration purposes, there are known visualization issues (Plotly binary encoding) that will be addressed in future iterations. The core data engineering pipeline, dimensional modeling, and data quality are complete and production-ready.
-
-### Interactive Dashboard
+### 5. Explore the warehouse
 
 ```bash
-# Create comprehensive analytics dashboard
-uv run python analytics/create_dashboard.py
-
-# Open movie_analytics_dashboard.html in your browser for:
-# - Movie production trends by decade
-# - Genre popularity analysis
-# - Quality vs popularity scatter plots
-# - Runtime evolution over time
-# - Entertainment industry generational analysis
-```
-
-### Explore Your Data Warehouse
-
-```bash
-# View interactive dbt documentation
 cd dbt/movie_analytics
 uv run dbt docs generate
 uv run dbt docs serve
-
-# Run sample business queries
-# See analytics/sample_queries.md for 12 ready-to-use analytical queries
 ```
 
-### Available Data Marts
+`analytics/sample_queries.md` contains 12 ready-to-run analytical
+queries covering production trends, genre popularity, quality vs.
+popularity, and career/generational analysis. A Plotly dashboard
+generator is included (`analytics/create_dashboard.py`) for
+demonstration purposes; the project's focus is the data engineering
+pipeline rather than the visualization layer.
 
-- **`dim_titles`**: 1.2M+ movies/shows with content categorization
-- **`dim_people`**: 14.7M+ industry professionals with career metrics
-- **`fact_ratings`**: Quality metrics with statistical significance flags
-- **`bridge_cast_crew`**: Cast/crew relationships with role categorization
+## Data Quality and Testing
 
-### Sample Insights Available:
+The dbt project includes 30 tests covering null constraints,
+uniqueness, referential integrity, accepted values, and custom
+business rules (rating ranges, plausible release years, runtime and
+career-span sanity checks, rating/success consistency).
 
-- **Content trends**: Movie production by decade, genre popularity evolution
-- **Quality analysis**: Rating distributions, highly-rated vs popular content
-- **People analytics**: Career spans, generational shifts, profession distributions
-- **Business metrics**: Success categories, statistical significance testing
+Notable data quality issues identified and handled in staging:
+
+- Filtered 59 person records with null `primary_name`
+- Removed records with unsupported title types
+- Resolved ~9,900 orphaned alternative titles and ~9,200 orphaned
+  cast/crew records to preserve referential integrity
+- Normalized IMDb's `\N` sentinel values to SQL nulls
+
+## CI/CD
+
+The GitHub Actions pipeline ([workflow](.github/workflows/main.yml))
+runs on every push and pull request:
+
+1. **Code quality**: pre-commit hooks with ruff linting and
+   formatting
+2. **Infrastructure validation**: spins up PostgreSQL 16 as a service
+   container, applies the raw schema, and verifies database
+   connectivity from the loader
+3. **dbt validation**: parses and compiles all models and tests
+   against a dedicated CI target, then generates documentation
+
+CI validates schema and infrastructure rather than transformation
+logic on full data, keeping runs under five minutes with no large
+file dependencies. The rationale and trade-offs are documented in
+[TESTING_STRATEGY.md](TESTING_STRATEGY.md).
 
 ## Project Structure
 
 ```
 movie_analytics_etl/
-├── docker-compose.yml           # Postgres container with volume mounts
-├── pyproject.toml              # Project metadata, dependencies, and tool config
-├── uv.lock                     # Locked dependency versions (managed by uv)
-├── sql/raw_schema.sql          # Raw table definitions for IMDb data
-├── data_lake/landing/archive/  # IMDb .tsv files (176M+ records)
-│   ├── title.basics.tsv       # ~10M titles (movies, TV shows, etc.)
-│   ├── title.ratings.tsv      # ~1.4M ratings
-│   ├── name.basics.tsv        # ~13M people (actors, directors, etc.)
-│   ├── title.principals.tsv   # ~57M cast/crew relationships
-│   └── title.akas.tsv         # ~94M alternative titles
-├── ingestion/load_raw.py      # Automated data loading script with environment detection
-├── ingestion/load_test_data.py # CI-specific test data loader
-├── analytics/                 # Business analytics and dashboards
-│   ├── create_dashboard.py   # Interactive HTML dashboard generator
-│   ├── sample_queries.md     # 12 business intelligence queries
-│   └── movie_analytics_dashboard.html  # Generated visualization
-├── dbt/movie_analytics/       # dbt project with complete dimensional model
-│   ├── models/staging/        # 5 staging models with data quality
-│   ├── models/marts/          # 4 business-ready dimensional tables
-│   ├── models/sources.yml     # Raw data source definitions
-│   └── tests/                 # Custom data quality tests
-├── .github/                   # CI/CD workflows and project documentation
-│   └── workflows/main.yml     # Automated testing pipeline
-├── TESTING_STRATEGY.md        # Comprehensive CI/CD testing methodology
-└── .pre-commit-config.yaml    # Code quality automation hooks
+├── docker-compose.yml            # PostgreSQL 16 container with volume mounts
+├── pyproject.toml                # Project metadata, dependencies, tool config
+├── uv.lock                       # Locked dependency versions (managed by uv)
+├── sql/raw_schema.sql            # Raw table definitions for IMDb data
+├── data_lake/landing/archive/    # IMDb .tsv files (176M+ records, gitignored)
+├── ingestion/
+│   ├── load_raw.py               # Bulk loader with environment detection
+│   └── load_test_data.py         # CI-specific test data loader
+├── dbt/movie_analytics/
+│   ├── models/staging/           # 5 staging models with quality filters
+│   ├── models/marts/             # Star schema: dims, fact, bridge
+│   ├── models/sources.yml        # Raw source definitions
+│   └── tests/                    # Custom business-rule tests
+├── analytics/
+│   ├── sample_queries.md         # 12 analytical queries
+│   └── create_dashboard.py       # Plotly dashboard generator
+├── .github/workflows/main.yml    # CI pipeline
+├── .pre-commit-config.yaml       # Formatting and lint hooks
+└── TESTING_STRATEGY.md           # CI/CD testing methodology
 ```
 
-## Data Quality & Testing
+## Roadmap
 
-Our dbt project includes comprehensive data quality measures:
-
-- **30 Total Tests**: Covering nulls, uniqueness, relationships, and business rules
-- **80% Pass Rate**: 24 tests passing, 6 edge cases identified
-- **Referential Integrity**: Foreign key relationships maintained across all tables
-- **Data Filters**: Automatic handling of orphaned records and invalid values
-
-### Key Data Quality Improvements
-
-1. **Missing Names**: Filtered 59 records with null `primary_name`
-2. **Invalid Types**: Removed 1 record with unsupported `title_type` ('tvPilot')
-3. **Orphaned Records**: Handled 9,943 orphaned alternative titles and 9,180 cast/crew records
-4. **Null Handling**: Proper conversion of IMDb's `\N` values to SQL nulls
-
-## Next Steps & Roadmap
-
-### Immediate Enhancements
-
-- **Performance Optimization**:
-  - Optimize `bridge_cast_crew` table build performance
-  - Add database indexes for faster analytical queries
-  - Implement incremental dbt models for large tables
-
-### Short Term
-
-- **Advanced Analytics**:
-  - Network analysis of actor-director collaborations
-  - Time-series forecasting of industry trends
-  - Recommendation engine based on ratings similarity
-
-### Long Term
-
-- **Data Expansion**: Additional datasets (Box Office, Awards, Reviews)
-- **Real-time Pipeline**: Streaming updates for new releases
-- **API Layer**: RESTful endpoints for dashboard integration
-- **Cloud Migration**: AWS/GCP deployment with managed services
-
-## CI/CD & Quality Assurance
-
-- **GitHub Actions Pipeline**: Automated testing with schema validation and code quality checks
-- **Pre-commit Hooks**: Automated code formatting, linting, and quality gates
-- **Testing Strategy**: Infrastructure-focused CI with comprehensive documentation ([see TESTING_STRATEGY.md](TESTING_STRATEGY.md))
-- **Environment Detection**: Smart loading scripts that work in both Docker and CI environments
-- **Code Quality**: Enforced standards with ruff linting/formatting and automated validation
-
-## Architecture Highlights
-
-- **Dimensional Modeling**: Star schema following Kimball methodology
-- **Data Quality**: Comprehensive testing with 80%+ pass rate
-- **Robust CI/CD**: GitHub Actions pipeline with environment-aware testing
-- **Scalable Design**: Handles 176M+ records with room for growth
-- **Modern Stack**: dbt + PostgreSQL + Python analytics
-- **Documentation**: Self-documenting with dbt and inline comments
+- Incremental dbt models and index tuning for the largest tables
+  (`bridge_cast_crew` in particular)
+- Sample-data CI stage to exercise transformation logic end to end
+- Additional datasets (box office, awards) and a serving/API layer
+- Cloud deployment on managed services (AWS/GCP)
 
 ## Development Notes
 
-- **IMDb Data Quirks**: Uses `\N` for nulls, comma-separated values, adult content flags
-- **Memory Requirements**: Large datasets require Docker memory allocation (4GB+ recommended)
-- **dbt Best Practices**: Raw → Staging → Marts pattern with comprehensive testing
-- **VS Code Setup**: dbt Power User extension recommended for Jinja support
+- IMDb data uses `\N` for nulls and comma-separated multi-value
+  fields; staging models normalize both.
+- Loading the full datasets requires 4GB+ of memory allocated to
+  Docker.
+- The dbt Power User extension for VS Code is recommended for Jinja
+  support.
 
----
+## License
 
-Built with ❤️ for learning modern data engineering patterns
+MIT - see [LICENSE](LICENSE).
