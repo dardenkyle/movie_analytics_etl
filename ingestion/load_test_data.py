@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Configure logging
@@ -40,6 +41,11 @@ TEST_DATA_MAPPING = {
 DATA_DIR = Path("data_lake/landing/archive")
 
 
+def table_identifier(table_name: str) -> sql.Identifier:
+    """Convert a schema-qualified table name into a safely quoted identifier."""
+    return sql.Identifier(*table_name.split("."))
+
+
 def get_database_connection():
     """Establish connection to PostgreSQL database."""
     try:
@@ -57,11 +63,13 @@ def load_test_file(cursor, file_path: Path, table_name: str) -> int:
     # Use local file paths for CI
     container_path = str(file_path)
 
-    copy_sql = f"""
-        COPY {table_name}
-        FROM '{container_path}'
-        WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)
-    """
+    copy_sql = sql.SQL(
+        "COPY {table} FROM {path} "
+        "WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)"
+    ).format(
+        table=table_identifier(table_name),
+        path=sql.Literal(container_path),
+    )
 
     try:
         cursor.execute(copy_sql)
