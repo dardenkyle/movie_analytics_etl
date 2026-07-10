@@ -2,7 +2,7 @@
 REM Movie Analytics ETL Pipeline Runner (Windows)
 REM This script executes the complete pipeline from raw data loading to final analytics
 
-echo 🎬 Movie Analytics ETL Pipeline Starting...
+echo Movie Analytics ETL Pipeline Starting...
 echo ==============================================
 
 REM Configuration
@@ -15,37 +15,37 @@ echo 📋 Step 1: Checking Prerequisites
 REM Check Docker
 docker --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ Docker is not installed or not in PATH
-    pause
-    exit /b 1
+ echo [FAIL] Docker is not installed or not in PATH
+ pause
+ exit /b 1
 )
 
 REM Check if PostgreSQL container is running
 docker compose ps | findstr postgres >nul
 if %errorlevel% neq 0 (
-    echo ⚠️  PostgreSQL container not running. Starting it...
-    docker compose up -d postgres
-    timeout /t 10 >nul
+ echo [WARN] PostgreSQL container not running. Starting it...
+ docker compose up -d postgres
+ timeout /t 10 >nul
 )
 
-echo ✅ Prerequisites checked
+echo [OK] Prerequisites checked
 
 echo 📋 Step 2: Setting up Python Environment
 
 REM Activate virtual environment
 if exist "%VENV_DIR%\Scripts\activate.bat" (
-    call "%VENV_DIR%\Scripts\activate.bat"
+ call "%VENV_DIR%\Scripts\activate.bat"
 ) else (
-    echo ⚠️  Virtual environment not found. Please create it first:
-    echo python -m venv .venv
-    pause
-    exit /b 1
+ echo [WARN] Virtual environment not found. Please create it first:
+ echo python -m venv .venv
+ pause
+ exit /b 1
 )
 
 REM Install/upgrade requirements
 pip install -q psycopg2-binary dbt-postgres
 
-echo ✅ Python environment ready
+echo [OK] Python environment ready
 
 echo 📋 Step 3: Loading Raw Data
 
@@ -55,24 +55,24 @@ for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t
 if "%DATA_COUNT%"=="" set DATA_COUNT=0
 
 if %DATA_COUNT%==0 (
-    echo ⚠️  Raw data not found. Loading IMDb datasets...
+ echo [WARN] Raw data not found. Loading IMDb datasets...
 
-    REM Create raw schema if it doesn't exist
-    docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
+ REM Create raw schema if it doesn't exist
+ docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
 
-    REM Load raw data
-    python ingestion\load_raw.py
+ REM Load raw data
+ python ingestion\load_raw.py
 
-    echo ✅ Raw data loaded successfully
+ echo [OK] Raw data loaded successfully
 ) else (
-    echo ✅ Raw data already loaded (%DATA_COUNT% title records found^)
+ echo [OK] Raw data already loaded (%DATA_COUNT% title records found^)
 )
 
 echo 📋 Step 4: Installing dbt Dependencies
 
 cd /d "%DBT_DIR%"
 dbt deps --quiet
-echo ✅ dbt dependencies installed
+echo [OK] dbt dependencies installed
 
 echo 📋 Step 5: Running dbt Transformations
 
@@ -82,7 +82,7 @@ dbt run --select staging --quiet
 echo Building marts models...
 dbt run --select marts --quiet
 
-echo ✅ dbt models built successfully
+echo [OK] dbt models built successfully
 
 echo 📋 Step 6: Running Data Quality Tests
 
@@ -95,18 +95,18 @@ dbt test --select marts
 echo Running custom business logic tests...
 dbt test --select test_type:generic
 
-echo ✅ Data quality tests completed
+echo [OK] Data quality tests completed
 
 echo 📋 Step 7: Generating Documentation
 
 dbt docs generate --quiet
-echo ✅ Documentation generated (run 'dbt docs serve' to view^)
+echo [OK] Documentation generated (run 'dbt docs serve' to view^)
 
 echo.
-echo 🎉 Pipeline Execution Complete!
+echo [OK] Pipeline Execution Complete!
 echo ================================
 
-echo 📊 Final Data Summary:
+echo Final Data Summary:
 echo ----------------------
 
 for /f %%i in ('docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_titles;"') do set TITLES_COUNT=%%i
@@ -124,6 +124,6 @@ echo • Run sample queries: see analytics\sample_queries.md
 echo • Connect BI tools to staging_marts schema in PostgreSQL
 echo.
 
-echo ✅ Movie Analytics ETL Pipeline completed successfully! 🚀
+echo [OK] Movie Analytics ETL Pipeline completed successfully! 
 
 pause

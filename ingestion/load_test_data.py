@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Configure logging
@@ -46,10 +47,10 @@ def get_database_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        logger.info("✅ Connected to PostgreSQL database")
+        logger.info("[OK] Connected to PostgreSQL database")
         return conn
     except Exception as e:
-        logger.error(f"❌ Database connection failed: {e}")
+        logger.error(f"[FAIL] Database connection failed: {e}")
         sys.exit(1)
 
 
@@ -58,19 +59,17 @@ def load_test_file(cursor, file_path: Path, table_name: str) -> int:
     # Use local file paths for CI
     container_path = str(file_path)
 
-    copy_sql = f"""
-        COPY {table_name}
-        FROM '{container_path}'
-        WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)
-    """
+    copy_sql = sql.SQL(
+        "COPY {} FROM {} WITH (FORMAT text, DELIMITER E'\t', NULL '\N', HEADER true)"
+    ).format(_table_identifier(table_name), sql.Literal(container_path))
 
     try:
         cursor.execute(copy_sql)
         row_count = cursor.rowcount
-        logger.info(f"✅ Loaded {row_count} test rows into {table_name}")
+        logger.info(f"[OK] Loaded {row_count} test rows into {table_name}")
         return row_count
     except Exception as e:
-        logger.error(f"❌ Failed to load {file_path.name}: {e}")
+        logger.error(f"[FAIL] Failed to load {file_path.name}: {e}")
         return 0
 
 
@@ -86,7 +85,7 @@ def main():
             missing_files.append(str(file_path))
 
     if missing_files:
-        logger.error(f"❌ Missing test data files: {missing_files}")
+        logger.error(f"[FAIL] Missing test data files: {missing_files}")
         sys.exit(1)
 
     conn = get_database_connection()
@@ -101,7 +100,7 @@ def main():
     cursor.close()
     conn.close()
 
-    logger.info(f"✅ Test data loading completed! Total rows: {total_rows}")
+    logger.info(f"[OK] Test data loading completed! Total rows: {total_rows}")
 
 
 if __name__ == "__main__":

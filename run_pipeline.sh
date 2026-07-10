@@ -3,9 +3,9 @@
 # Movie Analytics ETL Pipeline Runner
 # This script executes the complete pipeline from raw data loading to final analytics
 
-set -e  # Exit on any error
+set -e # Exit on any error
 
-echo "🎬 Movie Analytics ETL Pipeline Starting..."
+echo " Movie Analytics ETL Pipeline Starting..."
 echo "=============================================="
 
 # Configuration
@@ -21,19 +21,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_step() {
-    echo -e "${BLUE}📋 Step $1: $2${NC}"
+ echo -e "${BLUE}📋 Step $1: $2${NC}"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+ echo -e "${GREEN}[OK] $1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+ echo -e "${YELLOW}[WARN] $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+ echo -e "${RED}[FAIL] $1${NC}"
 }
 
 # Step 1: Check Prerequisites
@@ -41,15 +41,15 @@ print_step 1 "Checking Prerequisites"
 
 # Check Docker
 if ! command -v docker &> /dev/null; then
-    print_error "Docker is not installed or not in PATH"
-    exit 1
+ print_error "Docker is not installed or not in PATH"
+ exit 1
 fi
 
 # Check if PostgreSQL container is running
 if ! docker compose ps | grep -q postgres; then
-    print_warning "PostgreSQL container not running. Starting it..."
-    docker compose up -d postgres
-    sleep 10  # Give PostgreSQL time to start
+ print_warning "PostgreSQL container not running. Starting it..."
+ docker compose up -d postgres
+ sleep 10 # Give PostgreSQL time to start
 fi
 
 print_success "Prerequisites checked"
@@ -58,8 +58,8 @@ print_success "Prerequisites checked"
 print_step 2 "Setting up Python Environment"
 
 if [ ! -d "$VENV_DIR" ]; then
-    print_warning "Virtual environment not found. Creating it..."
-    python -m venv "$VENV_DIR"
+ print_warning "Virtual environment not found. Creating it..."
+ python -m venv "$VENV_DIR"
 fi
 
 # Activate virtual environment
@@ -77,17 +77,17 @@ echo "Checking if raw data needs to be loaded..."
 DATA_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM raw.title_basics;" 2>/dev/null | tr -d ' ' || echo "0")
 
 if [ "$DATA_COUNT" == "0" ] || [ -z "$DATA_COUNT" ]; then
-    print_warning "Raw data not found. Loading IMDb datasets..."
+ print_warning "Raw data not found. Loading IMDb datasets..."
 
-    # Create raw schema if it doesn't exist
-    docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
+ # Create raw schema if it doesn't exist
+ docker compose exec -T postgres psql -U postgres -d analytics -f /sql/raw_schema.sql
 
-    # Load raw data
-    python ingestion/load_raw.py
+ # Load raw data
+ python ingestion/load_raw.py
 
-    print_success "Raw data loaded successfully"
+ print_success "Raw data loaded successfully"
 else
-    print_success "Raw data already loaded ($DATA_COUNT title records found)"
+ print_success "Raw data already loaded ($DATA_COUNT title records found)"
 fi
 
 # Step 4: Install dbt Dependencies
@@ -133,11 +133,11 @@ print_success "Documentation generated (run 'dbt docs serve' to view)"
 
 # Step 8: Pipeline Summary
 echo ""
-echo "🎉 Pipeline Execution Complete!"
+echo "[OK] Pipeline Execution Complete!"
 echo "================================"
 
 # Get final record counts
-echo "📊 Final Data Summary:"
+echo " Final Data Summary:"
 echo "----------------------"
 
 TITLES_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_titles;" | tr -d ' ')
@@ -155,4 +155,4 @@ echo "• Run sample queries: see analytics/sample_queries.md"
 echo "• Connect BI tools to staging_marts schema in PostgreSQL"
 echo ""
 
-print_success "Movie Analytics ETL Pipeline completed successfully! 🚀"
+print_success "Movie Analytics ETL Pipeline completed successfully! "

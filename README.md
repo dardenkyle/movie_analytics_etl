@@ -5,7 +5,7 @@
 ![dbt](https://img.shields.io/badge/dbt-1.9.1-orange.svg)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-16-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Last Commit](https://img.shields.io/github/last-commit/dardenkyle/movie_analytics_etl)
+![Last Commit]()
 
 An end-to-end data engineering project using **PostgreSQL and dbt** to process IMDb datasets into a dimensional data warehouse.
 

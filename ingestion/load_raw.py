@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Configure logging
@@ -93,7 +94,9 @@ def clear_table(cursor, table_name: str) -> None:
         table_name: Name of table to clear
     """
     try:
-        cursor.execute(f"TRUNCATE TABLE {table_name}")
+        cursor.execute(
+            sql.SQL("TRUNCATE TABLE {}").format(_table_identifier(table_name))
+        )
         logger.info("Cleared existing data from %s", table_name)
     except psycopg2.Error as e:
         logger.error("Failed to clear table %s: %s", table_name, e)
@@ -125,11 +128,9 @@ def load_tsv_file(cursor, file_path: Path, table_name: str) -> int:
         # Docker environment: use mounted volume path
         container_path = f"/data/landing/archive/{file_path.name}"
 
-    copy_sql = f"""
-        COPY {table_name}
-        FROM '{container_path}'
-        WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N', HEADER true)
-    """
+    copy_sql = sql.SQL(
+        "COPY {} FROM {} WITH (FORMAT text, DELIMITER E'\t', NULL '\N', HEADER true)"
+    ).format(_table_identifier(table_name), sql.Literal(container_path))
 
     try:
         cursor.execute(copy_sql)
@@ -153,11 +154,15 @@ def verify_data_load(cursor, table_name: str) -> Dict[str, int]:
         dict: Table statistics
     """
     try:
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        cursor.execute(
+            sql.SQL("SELECT COUNT(*) FROM {}").format(_table_identifier(table_name))
+        )
         row_count = cursor.fetchone()[0]
 
         # Get a sample record to verify structure
-        cursor.execute(f"SELECT * FROM {table_name} LIMIT 1")
+        cursor.execute(
+            sql.SQL("SELECT * FROM {} LIMIT 1").format(_table_identifier(table_name))
+        )
         sample_row = cursor.fetchone()
 
         return {
@@ -253,9 +258,9 @@ def main():
     )
 
     if successful_loads == total_files:
-        logger.info("🎉 All files loaded successfully!")
+        logger.info("[OK] All files loaded successfully!")
     else:
-        logger.warning("⚠️  Some files failed to load. Check logs above.")
+        logger.warning("[WARN]  Some files failed to load. Check logs above.")
         sys.exit(1)
 
 

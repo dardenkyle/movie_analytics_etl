@@ -2,139 +2,139 @@
 name: Movie Analytics ETL Pipeline
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+ push:
+ branches: [main]
+ pull_request:
+ branches: [main]
 
 jobs:
-  code-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+ code-quality:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+ - name: Setup Python
+ uses: actions/setup-python@v4
+ with:
+ python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pre-commit
+ - name: Install dependencies
+ run: |
+ pip install --upgrade pip
+ pip install -r requirements.txt
+ pip install pre-commit
 
-      - name: Run pre-commit checks
-        run: pre-commit run --all-files
+ - name: Run pre-commit checks
+ run: pre-commit run --all-files
 
-  data-pipeline-test:
-    runs-on: ubuntu-latest
-    needs: code-quality
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: analytics
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+ data-pipeline-test:
+ runs-on: ubuntu-latest
+ needs: code-quality
+ services:
+ postgres:
+ image: postgres:16
+ env:
+ POSTGRES_USER: postgres
+ POSTGRES_PASSWORD: postgres
+ POSTGRES_DB: analytics
+ ports:
+ - 5432:5432
+ options: >-
+ --health-cmd pg_isready
+ --health-interval 10s
+ --health-timeout 5s
+ --health-retries 5
 
-    steps:
-      - uses: actions/checkout@v4
+ steps:
+ - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+ - name: Setup Python
+ uses: actions/setup-python@v4
+ with:
+ python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+ - name: Install dependencies
+ run: |
+ pip install --upgrade pip
+ pip install -r requirements.txt
 
-      - name: Create sample test data
-        run: |
-          # Create minimal test data structure
-          mkdir -p data_lake/landing/archive
+ - name: Create sample test data
+ run: |
+ # Create minimal test data structure
+ mkdir -p data_lake/landing/archive
 
-          # Create minimal test TSV files with headers and a few rows
-          echo -e "tconst\ttitleType\tprimaryTitle\toriginalTitle\tisAdult\tstartYear\tendYear\truntimeMinutes\tgenres" > data_lake/landing/archive/title.basics.tsv
-          echo -e "tt0000001\tshort\tCarmencita\tCarmencita\t0\t1894\t\\N\t1\tDocumentary,Short" >> data_lake/landing/archive/title.basics.tsv
-          echo -e "tt0000002\tshort\tLe clown et ses chiens\tLe clown et ses chiens\t0\t1892\t\\N\t5\tAnimation,Short" >> data_lake/landing/archive/title.basics.tsv
-          echo -e "tt0000003\tmovie\tTest Movie\tTest Movie\t0\t2000\t\\N\t120\tDrama,Action" >> data_lake/landing/archive/title.basics.tsv
+ # Create minimal test TSV files with headers and a few rows
+ echo -e "tconst\ttitleType\tprimaryTitle\toriginalTitle\tisAdult\tstartYear\tendYear\truntimeMinutes\tgenres" > data_lake/landing/archive/title.basics.tsv
+ echo -e "tt0000001\tshort\tCarmencita\tCarmencita\t0\t1894\t\\N\t1\tDocumentary,Short" >> data_lake/landing/archive/title.basics.tsv
+ echo -e "tt0000002\tshort\tLe clown et ses chiens\tLe clown et ses chiens\t0\t1892\t\\N\t5\tAnimation,Short" >> data_lake/landing/archive/title.basics.tsv
+ echo -e "tt0000003\tmovie\tTest Movie\tTest Movie\t0\t2000\t\\N\t120\tDrama,Action" >> data_lake/landing/archive/title.basics.tsv
 
-          echo -e "tconst\taverageRating\tnumVotes" > data_lake/landing/archive/title.ratings.tsv
-          echo -e "tt0000001\t5.7\t1976" >> data_lake/landing/archive/title.ratings.tsv
-          echo -e "tt0000002\t6.0\t267" >> data_lake/landing/archive/title.ratings.tsv
-          echo -e "tt0000003\t7.5\t1000" >> data_lake/landing/archive/title.ratings.tsv
+ echo -e "tconst\taverageRating\tnumVotes" > data_lake/landing/archive/title.ratings.tsv
+ echo -e "tt0000001\t5.7\t1976" >> data_lake/landing/archive/title.ratings.tsv
+ echo -e "tt0000002\t6.0\t267" >> data_lake/landing/archive/title.ratings.tsv
+ echo -e "tt0000003\t7.5\t1000" >> data_lake/landing/archive/title.ratings.tsv
 
-          echo -e "nconst\tprimaryName\tbirthYear\tdeathYear\tprimaryProfession\tknownForTitles" > data_lake/landing/archive/name.basics.tsv
-          echo -e "nm0000001\tFred Astaire\t1899\t1987\tactor,miscellaneous,producer\ttt0053137,tt0072308,tt0043044,tt0050419" >> data_lake/landing/archive/name.basics.tsv
-          echo -e "nm0000002\tTest Actor\t1970\t\\N\tactor\ttt0000003" >> data_lake/landing/archive/name.basics.tsv
+ echo -e "nconst\tprimaryName\tbirthYear\tdeathYear\tprimaryProfession\tknownForTitles" > data_lake/landing/archive/name.basics.tsv
+ echo -e "nm0000001\tFred Astaire\t1899\t1987\tactor,miscellaneous,producer\ttt0053137,tt0072308,tt0043044,tt0050419" >> data_lake/landing/archive/name.basics.tsv
+ echo -e "nm0000002\tTest Actor\t1970\t\\N\tactor\ttt0000003" >> data_lake/landing/archive/name.basics.tsv
 
-          echo -e "tconst\tordering\tnconst\tcategory\tjob\tcharacters" > data_lake/landing/archive/title.principals.tsv
-          echo -e "tt0000001\t1\tnm0000001\tactor\t\\N\t[\"Self\"]" >> data_lake/landing/archive/title.principals.tsv
-          echo -e "tt0000003\t1\tnm0000002\tactor\t\\N\t[\"Hero\"]" >> data_lake/landing/archive/title.principals.tsv
+ echo -e "tconst\tordering\tnconst\tcategory\tjob\tcharacters" > data_lake/landing/archive/title.principals.tsv
+ echo -e "tt0000001\t1\tnm0000001\tactor\t\\N\t[\"Self\"]" >> data_lake/landing/archive/title.principals.tsv
+ echo -e "tt0000003\t1\tnm0000002\tactor\t\\N\t[\"Hero\"]" >> data_lake/landing/archive/title.principals.tsv
 
-          echo -e "titleId\tordering\ttitle\tregion\tlanguage\ttypes\tattributes\tisOriginalTitle" > data_lake/landing/archive/title.akas.tsv
-          echo -e "tt0000001\t1\tCarmencita\tUS\t\\N\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
-          echo -e "tt0000003\t1\tTest Movie\tUS\ten\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
+ echo -e "titleId\tordering\ttitle\tregion\tlanguage\ttypes\tattributes\tisOriginalTitle" > data_lake/landing/archive/title.akas.tsv
+ echo -e "tt0000001\t1\tCarmencita\tUS\t\\N\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
+ echo -e "tt0000003\t1\tTest Movie\tUS\ten\t\\N\t\\N\t1" >> data_lake/landing/archive/title.akas.tsv
 
-      - name: Setup raw database schema
-        run: |
-          PGPASSWORD=postgres psql -h localhost -U postgres -d analytics -f sql/raw_schema.sql
+ - name: Setup raw database schema
+ run: |
+ PGPASSWORD=postgres psql -h localhost -U postgres -d analytics -f sql/raw_schema.sql
 
-      - name: Test data loading (schema validation only)
-        run: |
-          # Test that the Python script can import and validate schema
-          python -c "
-          from ingestion.load_raw import FILE_TABLE_MAPPING, get_database_connection
-          print('✅ load_raw.py imports successfully')
-          print(f'✅ Configured for {len(FILE_TABLE_MAPPING)} tables')
-          conn = get_database_connection()
-          conn.close()
-          print('✅ Database connection test passed')
-          "
-        env:
-          GITHUB_ACTIONS: "true"
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: analytics
+ - name: Test data loading (schema validation only)
+ run: |
+ # Test that the Python script can import and validate schema
+ python -c "
+ from ingestion.load_raw import FILE_TABLE_MAPPING, get_database_connection
+ print('[OK] load_raw.py imports successfully')
+ print(f'[OK] Configured for {len(FILE_TABLE_MAPPING)} tables')
+ conn = get_database_connection()
+ conn.close()
+ print('[OK] Database connection test passed')
+ "
+ env:
+ GITHUB_ACTIONS: "true"
+ POSTGRES_HOST: localhost
+ POSTGRES_PORT: 5432
+ POSTGRES_USER: postgres
+ POSTGRES_PASSWORD: postgres
+ POSTGRES_DB: analytics
 
-      - name: Setup dbt
-        run: |
-          cd dbt/movie_analytics
-          dbt deps --quiet
+ - name: Setup dbt
+ run: |
+ cd dbt/movie_analytics
+ dbt deps --quiet
 
-      - name: Run dbt transformations (dry run)
-        run: |
-          cd dbt/movie_analytics
-          # Parse and compile models without executing (since no data loaded)
-          dbt parse --target ci
-          dbt compile --target ci
-        env:
-          DBT_PROFILES_DIR: .
+ - name: Run dbt transformations (dry run)
+ run: |
+ cd dbt/movie_analytics
+ # Parse and compile models without executing (since no data loaded)
+ dbt parse --target ci
+ dbt compile --target ci
+ env:
+ DBT_PROFILES_DIR: .
 
-      - name: Run data quality tests (dry run)
-        run: |
-          cd dbt/movie_analytics
-          # Validate test definitions without executing (since no data loaded)
-          dbt parse --target ci
-          echo "✅ Data quality test definitions validated"
-        env:
-          DBT_PROFILES_DIR: .
+ - name: Run data quality tests (dry run)
+ run: |
+ cd dbt/movie_analytics
+ # Validate test definitions without executing (since no data loaded)
+ dbt parse --target ci
+ echo "[OK] Data quality test definitions validated"
+ env:
+ DBT_PROFILES_DIR: .
 
-      - name: Generate documentation
-        run: |
-          cd dbt/movie_analytics
-          dbt docs generate --quiet --target ci
-        env:
-          DBT_PROFILES_DIR: .
+ - name: Generate documentation
+ run: |
+ cd dbt/movie_analytics
+ dbt docs generate --quiet --target ci
+ env:
+ DBT_PROFILES_DIR: .
