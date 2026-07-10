@@ -45,10 +45,10 @@ def get_database_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        logger.info("✅ Connected to PostgreSQL database")
+        logger.info("Connected to PostgreSQL database")
         return conn
     except Exception as e:
-        logger.error(f"❌ Database connection failed: {e}")
+        logger.error(f"Database connection failed: {e}")
         sys.exit(1)
 
 
@@ -66,16 +66,16 @@ def load_test_file(cursor, file_path: Path, table_name: str) -> int:
     try:
         cursor.execute(copy_sql)
         row_count = cursor.rowcount
-        logger.info(f"✅ Loaded {row_count} test rows into {table_name}")
+        logger.info(f"Loaded {row_count} test rows into {table_name}")
         return row_count
     except Exception as e:
-        logger.error(f"❌ Failed to load {file_path.name}: {e}")
+        logger.error(f"Failed to load {file_path.name}: {e}")
         return 0
 
 
 def main():
     """Load test data for CI validation."""
-    logger.info("🔄 Starting test data loading for CI...")
+    logger.info("Starting test data loading for CI...")
 
     # Check if files exist
     missing_files = []
@@ -85,7 +85,7 @@ def main():
             missing_files.append(str(file_path))
 
     if missing_files:
-        logger.error(f"❌ Missing test data files: {missing_files}")
+        logger.error(f"Missing test data files: {missing_files}")
         sys.exit(1)
 
     conn = get_database_connection()
@@ -100,7 +100,7 @@ def main():
     cursor.close()
     conn.close()
 
-    logger.info(f"✅ Test data loading completed! Total rows: {total_rows}")
+    logger.info(f"Test data loading completed. Total rows: {total_rows}")
 
 
 if __name__ == "__main__":

@@ -204,17 +204,17 @@ def load_all_files() -> Dict[str, bool]:
 
                 if stats["row_count"] > 0:
                     logger.info(
-                        "✓ Successfully loaded %s: %d rows",
+                        "Successfully loaded %s: %d rows",
                         filename,
                         stats["row_count"],
                     )
                     results[filename] = True
                 else:
-                    logger.warning("✗ No data found in %s after load", table_name)
+                    logger.warning("No data found in %s after load", table_name)
                     results[filename] = False
 
             except Exception as e:
-                logger.error("✗ Failed to load %s: %s", filename, e)
+                logger.error("Failed to load %s: %s", filename, e)
                 results[filename] = False
 
         cursor.close()
@@ -245,7 +245,7 @@ def main():
     total_files = len(results)
 
     for filename, success in results.items():
-        status = "✓ SUCCESS" if success else "✗ FAILED"
+        status = "SUCCESS" if success else "FAILED"
         logger.info("%-25s %s", filename, status)
 
     logger.info(
@@ -253,9 +253,9 @@ def main():
     )
 
     if successful_loads == total_files:
-        logger.info("🎉 All files loaded successfully!")
+        logger.info("All files loaded successfully")
     else:
-        logger.warning("⚠️  Some files failed to load. Check logs above.")
+        logger.warning("Some files failed to load. Check logs above.")
         sys.exit(1)
 
 
