@@ -1,3 +1,29 @@
+[project]
+name = "movie-analytics-etl"
+version = "0.1.0"
+description = "End-to-end data engineering project using PostgreSQL and dbt to process IMDb datasets into a dimensional data warehouse"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    # Core ETL
+    "psycopg2-binary>=2.9.7,<3",
+    "dbt-postgres>=1.9.1,<2",
+    # Data analysis and visualization
+    "pandas>=2.0.3,<3",
+    "plotly>=5.17.0,<6",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.3",
+    "ruff>=0.15.21",
+]
+
+[tool.uv]
+# Analysis/ETL scripts only; nothing is built or installed as a package.
+package = false
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"

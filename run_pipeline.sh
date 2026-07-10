@@ -5,13 +5,17 @@
 
 set -e  # Exit on any error
 
-echo "🎬 Movie Analytics ETL Pipeline Starting..."
+echo "Movie Analytics ETL Pipeline Starting..."
 echo "=============================================="
 
 # Configuration
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DBT_DIR="$PROJECT_DIR/dbt/movie_analytics"
 VENV_DIR="$PROJECT_DIR/.venv"
+
+# Run everything from the repo root so docker compose, uv, and the
+# ingestion step resolve their files regardless of the caller's cwd
+cd "$PROJECT_DIR"
 
 # Colors for output
 RED='\033[0;31m'
@@ -21,19 +25,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_step() {
-    echo -e "${BLUE}📋 Step $1: $2${NC}"
+    echo -e "${BLUE}Step $1: $2${NC}"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}$1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED}$1${NC}"
 }
 
 # Step 1: Check Prerequisites
@@ -42,6 +46,12 @@ print_step 1 "Checking Prerequisites"
 # Check Docker
 if ! command -v docker &> /dev/null; then
     print_error "Docker is not installed or not in PATH"
+    exit 1
+fi
+
+# Check uv
+if ! command -v uv &> /dev/null; then
+    print_error "uv is not installed. See https://docs.astral.sh/uv/getting-started/installation/"
     exit 1
 fi
 
@@ -57,16 +67,12 @@ print_success "Prerequisites checked"
 # Step 2: Check Python Virtual Environment
 print_step 2 "Setting up Python Environment"
 
-if [ ! -d "$VENV_DIR" ]; then
-    print_warning "Virtual environment not found. Creating it..."
-    python -m venv "$VENV_DIR"
-fi
+# Create/update the virtual environment from uv.lock; --locked fails
+# fast if the lockfile is out of date with pyproject.toml (matches CI)
+uv sync --locked --quiet
 
 # Activate virtual environment
 source "$VENV_DIR/bin/activate" 2>/dev/null || source "$VENV_DIR/Scripts/activate" 2>/dev/null
-
-# Install/upgrade requirements
-pip install -q psycopg2-binary dbt-postgres
 
 print_success "Python environment ready"
 
@@ -129,30 +135,30 @@ print_success "Data quality tests completed"
 print_step 7 "Generating Documentation"
 
 dbt docs generate --quiet
-print_success "Documentation generated (run 'dbt docs serve' to view)"
+print_success "Documentation generated (run 'uv run dbt docs serve' to view)"
 
 # Step 8: Pipeline Summary
 echo ""
-echo "🎉 Pipeline Execution Complete!"
+echo "Pipeline Execution Complete!"
 echo "================================"
 
 # Get final record counts
-echo "📊 Final Data Summary:"
+echo "Final Data Summary:"
 echo "----------------------"
 
 TITLES_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_titles;" | tr -d ' ')
 PEOPLE_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.dim_people;" | tr -d ' ')
 RATINGS_COUNT=$(docker compose exec -T postgres psql -U postgres -d analytics -t -c "SELECT COUNT(*) FROM staging_marts.fact_ratings;" | tr -d ' ')
 
-echo "• Movies/TV Shows: $TITLES_COUNT records"
-echo "• People: $PEOPLE_COUNT records"
-echo "• Ratings: $RATINGS_COUNT records"
+echo "- Movies/TV Shows: $TITLES_COUNT records"
+echo "- People: $PEOPLE_COUNT records"
+echo "- Ratings: $RATINGS_COUNT records"
 
 echo ""
-echo "🔍 Next Steps:"
-echo "• View documentation: cd dbt/movie_analytics && dbt docs serve"
-echo "• Run sample queries: see analytics/sample_queries.md"
-echo "• Connect BI tools to staging_marts schema in PostgreSQL"
+echo "Next Steps:"
+echo "- View documentation: cd dbt/movie_analytics && uv run dbt docs serve"
+echo "- Run sample queries: see analytics/sample_queries.md"
+echo "- Connect BI tools to staging_marts schema in PostgreSQL"
 echo ""
 
-print_success "Movie Analytics ETL Pipeline completed successfully! 🚀"
+print_success "Movie Analytics ETL Pipeline completed successfully!"
