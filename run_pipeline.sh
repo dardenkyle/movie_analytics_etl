@@ -135,7 +135,7 @@ print_success "Data quality tests completed"
 print_step 7 "Generating Documentation"
 
 dbt docs generate --quiet
-print_success "Documentation generated (run 'dbt docs serve' to view)"
+print_success "Documentation generated (run 'uv run dbt docs serve' to view)"
 
 # Step 8: Pipeline Summary
 echo ""
@@ -156,7 +156,7 @@ echo "- Ratings: $RATINGS_COUNT records"
 
 echo ""
 echo "Next Steps:"
-echo "- View documentation: cd dbt/movie_analytics && dbt docs serve"
+echo "- View documentation: cd dbt/movie_analytics && uv run dbt docs serve"
 echo "- Run sample queries: see analytics/sample_queries.md"
 echo "- Connect BI tools to staging_marts schema in PostgreSQL"
 echo ""

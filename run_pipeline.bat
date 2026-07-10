@@ -116,7 +116,7 @@ echo Data quality tests completed
 echo Step 7: Generating Documentation
 
 dbt docs generate --quiet
-echo Documentation generated (run 'dbt docs serve' to view^)
+echo Documentation generated (run 'uv run dbt docs serve' to view^)
 
 echo.
 echo Pipeline Execution Complete!
@@ -135,7 +135,7 @@ echo - Ratings: %RATINGS_COUNT% records
 
 echo.
 echo Next Steps:
-echo - View documentation: cd dbt\movie_analytics ^&^& dbt docs serve
+echo - View documentation: cd dbt\movie_analytics ^&^& uv run dbt docs serve
 echo - Run sample queries: see analytics\sample_queries.md
 echo - Connect BI tools to staging_marts schema in PostgreSQL
 echo.
