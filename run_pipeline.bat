@@ -10,6 +10,10 @@ set PROJECT_DIR=%~dp0
 set DBT_DIR=%PROJECT_DIR%dbt\movie_analytics
 set VENV_DIR=%PROJECT_DIR%.venv
 
+REM Run everything from the repo root so docker compose, uv, and the
+REM ingestion step resolve their files regardless of the caller's cwd
+cd /d "%PROJECT_DIR%"
+
 echo Step 1: Checking Prerequisites
 
 REM Check Docker
@@ -40,11 +44,22 @@ echo Prerequisites checked
 
 echo Step 2: Setting up Python Environment
 
-REM Create/update the virtual environment from pyproject.toml and uv.lock
-uv sync --quiet
+REM Create/update the virtual environment from uv.lock; --locked fails
+REM fast if the lockfile is out of date with pyproject.toml (matches CI)
+uv sync --locked --quiet
+if %errorlevel% neq 0 (
+    echo Failed to install dependencies with uv sync
+    pause
+    exit /b 1
+)
 
 REM Activate virtual environment
 call "%VENV_DIR%\Scripts\activate.bat"
+if %errorlevel% neq 0 (
+    echo Failed to activate virtual environment at %VENV_DIR%
+    pause
+    exit /b 1
+)
 
 echo Python environment ready
 

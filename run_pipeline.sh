@@ -13,6 +13,10 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DBT_DIR="$PROJECT_DIR/dbt/movie_analytics"
 VENV_DIR="$PROJECT_DIR/.venv"
 
+# Run everything from the repo root so docker compose, uv, and the
+# ingestion step resolve their files regardless of the caller's cwd
+cd "$PROJECT_DIR"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -63,8 +67,9 @@ print_success "Prerequisites checked"
 # Step 2: Check Python Virtual Environment
 print_step 2 "Setting up Python Environment"
 
-# Create/update the virtual environment from pyproject.toml and uv.lock
-uv sync --quiet
+# Create/update the virtual environment from uv.lock; --locked fails
+# fast if the lockfile is out of date with pyproject.toml (matches CI)
+uv sync --locked --quiet
 
 # Activate virtual environment
 source "$VENV_DIR/bin/activate" 2>/dev/null || source "$VENV_DIR/Scripts/activate" 2>/dev/null
