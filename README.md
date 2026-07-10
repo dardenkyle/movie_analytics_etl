@@ -40,7 +40,7 @@ An end-to-end data engineering project using **PostgreSQL and dbt** to process I
 ### Prerequisites
 
 - Docker and Docker Compose
-- Python 3.11+ with virtual environment
+- [uv](https://docs.astral.sh/uv/) (manages Python 3.11+ and all project dependencies)
 
 ### 1. Start Infrastructure
 
@@ -60,15 +60,11 @@ psql -U postgres -d analytics -f /sql/raw_schema.sql
 **Option A: Automated Loading (Recommended)**
 
 ```bash
-# Activate virtual environment
-.venv\Scripts\activate  # Windows
-# or: source .venv/bin/activate  # Linux/Mac
-
-# Install dependencies
-pip install psycopg2-binary
+# Install dependencies (creates .venv from uv.lock)
+uv sync
 
 # Load all datasets
-python ingestion/load_raw.py
+uv run python ingestion/load_raw.py
 ```
 
 **Option B: Manual Loading (Single Table Example)**
@@ -104,20 +100,20 @@ This script will:
 **Manual Option: Run dbt Transformations Step-by-Step**
 
 ```bash
-cd dbt/movie_analytics
+# Install dependencies (creates .venv from uv.lock)
+uv sync
 
-# Install dbt and dependencies
-pip install -r ../../requirements.txt
-dbt deps
+cd dbt/movie_analytics
+uv run dbt deps
 
 # Build staging models
-dbt run --select staging
+uv run dbt run --select staging
 
 # Build marts models
-dbt run --select marts
+uv run dbt run --select marts
 
 # Run data quality tests
-dbt test
+uv run dbt test
 ```
 
 ## 📊 Analytics & Visualization
@@ -128,7 +124,7 @@ dbt test
 
 ```bash
 # Create comprehensive analytics dashboard
-python analytics/create_dashboard.py
+uv run python analytics/create_dashboard.py
 
 # Open movie_analytics_dashboard.html in your browser for:
 # - Movie production trends by decade
@@ -143,8 +139,8 @@ python analytics/create_dashboard.py
 ```bash
 # View interactive dbt documentation
 cd dbt/movie_analytics
-dbt docs generate
-dbt docs serve
+uv run dbt docs generate
+uv run dbt docs serve
 
 # Run sample business queries
 # See analytics/sample_queries.md for 12 ready-to-use analytical queries
@@ -169,6 +165,8 @@ dbt docs serve
 ```
 movie_analytics_etl/
 ├── docker-compose.yml           # Postgres container with volume mounts
+├── pyproject.toml              # Project metadata, dependencies, and tool config
+├── uv.lock                     # Locked dependency versions (managed by uv)
 ├── sql/raw_schema.sql          # Raw table definitions for IMDb data
 ├── data_lake/landing/archive/  # IMDb .tsv files (176M+ records)
 │   ├── title.basics.tsv       # ~10M titles (movies, TV shows, etc.)
@@ -238,7 +236,7 @@ Our dbt project includes comprehensive data quality measures:
 - **Pre-commit Hooks**: Automated code formatting, linting, and quality gates
 - **Testing Strategy**: Infrastructure-focused CI with comprehensive documentation ([see TESTING_STRATEGY.md](TESTING_STRATEGY.md))
 - **Environment Detection**: Smart loading scripts that work in both Docker and CI environments
-- **Code Quality**: Enforced standards with flake8, black formatting, and automated validation
+- **Code Quality**: Enforced standards with ruff linting/formatting and automated validation
 
 ## Architecture Highlights
 
