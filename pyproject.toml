@@ -4,9 +4,3 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "W", "F"]
-# E203 conflicts with black's slice formatting
-ignore = ["E203"]
-
-[tool.ruff.lint.per-file-ignores]
-# Embedded SQL/HTML template strings exceed the line limit and cannot be wrapped
-"analytics/create_dashboard.py" = ["E501"]

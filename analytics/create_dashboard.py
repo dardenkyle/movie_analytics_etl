@@ -36,7 +36,8 @@ def create_movies_by_decade_chart():
     SELECT
         dt.decade::int as decade,
         COUNT(*) as movie_count,
-        AVG(CASE WHEN fr.average_rating IS NOT NULL THEN fr.average_rating END) as avg_rating,
+        AVG(CASE WHEN fr.average_rating IS NOT NULL THEN fr.average_rating END)
+            as avg_rating,
         COUNT(CASE WHEN fr.is_highly_rated_popular THEN 1 END) as highly_rated_count
     FROM staging_marts.dim_titles dt
     LEFT JOIN staging_marts.fact_ratings fr ON dt.title_id = fr.title_id
@@ -326,7 +327,8 @@ def create_dashboard():
             .header { text-align: center; margin-bottom: 30px; }
             .chart-container { margin: 30px 0; }
             .metrics { display: flex; justify-content: space-around; margin: 20px 0; }
-            .metric { text-align: center; padding: 20px; background: #f0f0f0; border-radius: 10px; }
+            .metric { text-align: center; padding: 20px;
+                      background: #f0f0f0; border-radius: 10px; }
         </style>
     </head>
     <body>
@@ -378,7 +380,10 @@ def create_dashboard():
         chart_html = f"""
         <div id="chart{chart_id}" style="width:100%;height:500px;"></div>
         <script>
-            Plotly.newPlot('chart{chart_id}', {json.dumps(fig_dict["data"])}, {json.dumps(fig_dict["layout"])}, {json.dumps(config)});
+            Plotly.newPlot('chart{chart_id}',
+                {json.dumps(fig_dict["data"])},
+                {json.dumps(fig_dict["layout"])},
+                {json.dumps(config)});
         </script>
         """
 
@@ -393,7 +398,8 @@ def create_dashboard():
         <div class="header" style="margin-top: 50px;">
             <p><strong>Data Source:</strong> IMDb Non-Commercial Datasets</p>
             <p><strong>Processing:</strong> PostgreSQL + dbt + Python</p>
-            <p><strong>Architecture:</strong> Raw → Staging → Marts dimensional model</p>
+            <p><strong>Architecture:</strong>
+               Raw → Staging → Marts dimensional model</p>
         </div>
     </body>
     </html>
@@ -411,11 +417,23 @@ def create_dashboard():
 def get_summary_stats():
     """Print summary statistics about the data mart"""
     queries = {
-        "Total Movies": "SELECT COUNT(*) FROM staging_marts.dim_titles WHERE content_category = 'Movie'",
-        "Total TV Series": "SELECT COUNT(*) FROM staging_marts.dim_titles WHERE content_category = 'TV Series'",
+        "Total Movies": (
+            "SELECT COUNT(*) FROM staging_marts.dim_titles "
+            "WHERE content_category = 'Movie'"
+        ),
+        "Total TV Series": (
+            "SELECT COUNT(*) FROM staging_marts.dim_titles "
+            "WHERE content_category = 'TV Series'"
+        ),
         "Total People": "SELECT COUNT(*) FROM staging_marts.dim_people",
-        "Ratings with 1000+ votes": "SELECT COUNT(*) FROM staging_marts.fact_ratings WHERE is_statistically_significant = true",
-        "Highly Rated & Popular": "SELECT COUNT(*) FROM staging_marts.fact_ratings WHERE is_highly_rated_popular = true",
+        "Ratings with 1000+ votes": (
+            "SELECT COUNT(*) FROM staging_marts.fact_ratings "
+            "WHERE is_statistically_significant = true"
+        ),
+        "Highly Rated & Popular": (
+            "SELECT COUNT(*) FROM staging_marts.fact_ratings "
+            "WHERE is_highly_rated_popular = true"
+        ),
     }
 
     print("\n[DATA] Data Mart Summary:")
