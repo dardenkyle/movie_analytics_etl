@@ -443,9 +443,9 @@ def get_summary_stats():
         try:
             result = execute_query(query)
             count = result.iloc[0, 0]
-            print(f"• {metric}: {count:,}")
+            print(f"- {metric}: {count:,}")
         except Exception as e:
-            print(f"• {metric}: Error - {e}")
+            print(f"- {metric}: Error - {e}")
 
 
 if __name__ == "__main__":
