@@ -1,15 +1,37 @@
-Welcome to your new dbt project!
+# movie_analytics (dbt project)
 
-### Using the starter project
+Transforms raw IMDb data in PostgreSQL into a dimensional warehouse.
+Models follow a raw -> staging -> marts pattern.
 
-Try running the following commands:
-- dbt run
-- dbt test
+## Layout
 
+- `models/staging/` - five views that cast raw `text` columns to
+  proper types, convert IMDb's `\N` sentinel to SQL nulls, and apply
+  data quality filters (`stg_title_basics`, `stg_title_ratings`,
+  `stg_title_akas`, `stg_title_principals`, `stg_name_basics`)
+- `models/marts/` - star schema materialized as tables: `dim_titles`,
+  `dim_people`, `fact_ratings`, and the `bridge_cast_crew` bridge
+  table
+- `models/sources.yml` - source definitions for the `raw` schema
+- `tests/` - custom business-rule tests (rating ranges, plausible
+  years, runtime and career-span sanity checks)
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+## Usage
+
+```bash
+dbt deps          # install dbt_utils
+dbt run           # build staging then marts
+dbt test          # schema + custom data quality tests
+dbt docs generate && dbt docs serve
+```
+
+## Profiles
+
+`profiles.yml` defines two targets:
+
+- `dev` (default) - reads connection settings from `POSTGRES_*`
+  environment variables, falling back to the local Docker defaults
+- `ci` - fixed localhost settings used by the GitHub Actions service
+  container
+
+Set `DBT_PROFILES_DIR` to this directory when running outside of it.
