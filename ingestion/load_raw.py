@@ -53,8 +53,15 @@ def table_identifier(table_name: str) -> sql.Identifier:
 
     Returns:
         sql.Identifier: Composable identifier for use in SQL statements
+
+    Raises:
+        ValueError: If the name is not "table" or "schema.table" with
+            non-empty parts
     """
-    return sql.Identifier(*table_name.split("."))
+    parts = table_name.split(".")
+    if len(parts) > 2 or not all(parts):
+        raise ValueError(f"Invalid table name: {table_name!r}")
+    return sql.Identifier(*parts)
 
 
 def get_database_connection():

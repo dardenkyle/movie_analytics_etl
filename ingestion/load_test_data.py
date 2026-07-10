@@ -42,8 +42,15 @@ DATA_DIR = Path("data_lake/landing/archive")
 
 
 def table_identifier(table_name: str) -> sql.Identifier:
-    """Convert a schema-qualified table name into a safely quoted identifier."""
-    return sql.Identifier(*table_name.split("."))
+    """Convert a schema-qualified table name into a safely quoted identifier.
+
+    Raises ValueError unless the name is "table" or "schema.table" with
+    non-empty parts.
+    """
+    parts = table_name.split(".")
+    if len(parts) > 2 or not all(parts):
+        raise ValueError(f"Invalid table name: {table_name!r}")
+    return sql.Identifier(*parts)
 
 
 def get_database_connection():
